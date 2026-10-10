@@ -28,6 +28,24 @@ runs as the invoking user, read-only root filesystem, all capabilities dropped),
 6. **SQS `QueueUrl` points at `floci:4566`, not the gateway.** Harmless for JSON-protocol calls (the SDK sends to its configured
    endpoint), noted in case a client follows the URL.
 
+## Findings added during Task 8 (live stack, with the EKS cluster created)
+
+7. **Floci's EKS (and EC2) services need mock mode when no Docker socket is mounted.** Without it, `eks:CreateCluster` retries the
+   missing socket and hangs until the gateway times out. Setting `FLOCI_SERVICES_EKS_MOCK=true` and
+   `FLOCI_SERVICES_EC2_MOCK=true` ([Floci environment variables](https://floci.io/floci/configuration/environment-variables/),
+   [EKS](https://floci.io/floci/services/eks/)) makes both metadata-only: the cluster is `ACTIVE` immediately with
+   `serviceIpv4Cidr 10.100.0.0/16`. This is the "EC2 container execution off" switch amendment A1 asked about.
+8. **With the cluster record present, Karpenter 1.14.1 starts and stays up** (`1/1 Running`), discovers the cluster endpoint,
+   instance types, offerings, zones, kube DNS and Kubernetes version, and watches the interruption queue. The remaining error is
+   `updating pricing: no on-demand pricing found` (14 times in about 60 s).
+9. **Floci's Pricing data covers `us-east-1` only**, one product per page, and returns `PriceList: []` for `us-west-2`, the region
+   this stack and Karpenter use. Likely cause of finding 8's error. Options for Task 8's decision: route `pricing:GetProducts`
+   to `pricing-facade` (Task 13), or run the whole stack in `us-east-1`.
+10. **`ec2:DescribeInstanceStatus` is called by Karpenter 1.14.1 but was not in the plan's `ops.yaml`.** Added, and added to
+    `ops.Coupled` (it reads instance state). Trace so far: 12 distinct operations, that one was the only one missing.
+11. **A third-party signer passes the gateway:** `curl --aws-sigv4` (signing `x-amz-target` too) was accepted by `Verify` for both
+    the eks REST call and the Pricing JSON call. An independent check on Task 4 beyond the AWS test vectors.
+
 ## Isolation checks (plan Step 10), run live
 
 - Gateway: `127.0.0.1:4566` only. Floci: no published ports. No container in the stack is published on `0.0.0.0`.

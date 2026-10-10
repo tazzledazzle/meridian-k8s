@@ -78,6 +78,7 @@ var karpenterIAMPolicy = [][2]string{
 	{"ec2", "DescribeAvailabilityZones"}, {"ec2", "DeleteLaunchTemplate"}, {"ec2", "CreateTags"},
 	{"ec2", "CreateLaunchTemplate"}, {"ec2", "CreateFleet"}, {"ec2", "DescribeSpotPriceHistory"},
 	{"ec2", "TerminateInstances"}, {"ec2", "DescribeSubnets"}, {"ec2", "DescribeSecurityGroups"},
+	{"ec2", "DescribeInstanceStatus"}, // seen in the Task 8 trace: Karpenter 1.14.1's instance-status controller
 	{"pricing", "GetProducts"},
 	{"eks", "DescribeCluster"},
 	{"iam", "GetInstanceProfile"}, {"iam", "CreateInstanceProfile"}, {"iam", "DeleteInstanceProfile"},
@@ -107,5 +108,23 @@ func TestRepoOpsFileCoversKarpenterIAMPolicyAndIsValid(t *testing.T) {
 		if !l.Has(sn[0], sn[1]) {
 			t.Errorf("ops.yaml is missing %s:%s", sn[0], sn[1])
 		}
+	}
+}
+
+// DescribeInstanceStatus reports the state of instances CreateFleet made, so it must share their backend.
+func TestDescribeInstanceStatusIsCoupledToTheInstanceLifecycle(t *testing.T) {
+	found := false
+	for _, k := range Coupled {
+		found = found || k == "ec2:DescribeInstanceStatus"
+	}
+	if !found {
+		t.Fatal("ec2:DescribeInstanceStatus must be in Coupled")
+	}
+	split := List{Ops: []Op{
+		{Service: "ec2", Name: "CreateFleet", Protocol: "query", Backend: "floci", Fidelity: "behavior-inferred"},
+		{Service: "ec2", Name: "DescribeInstanceStatus", Protocol: "query", Backend: "ec2-sim", Fidelity: "behavior-inferred"},
+	}}
+	if err := split.Validate(); err == nil {
+		t.Fatal("splitting DescribeInstanceStatus from CreateFleet should be rejected")
 	}
 }

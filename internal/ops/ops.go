@@ -37,7 +37,7 @@ var (
 // holds no per-instance state (instance types, offerings, zones, spot prices)
 // may be served by a different backend.
 var Coupled = []string{
-	"ec2:CreateFleet", "ec2:RunInstances", "ec2:TerminateInstances", "ec2:DescribeInstances", "ec2:CreateTags",
+	"ec2:CreateFleet", "ec2:RunInstances", "ec2:TerminateInstances", "ec2:DescribeInstances", "ec2:DescribeInstanceStatus", "ec2:CreateTags",
 	"ec2:CreateLaunchTemplate", "ec2:DescribeLaunchTemplates", "ec2:DeleteLaunchTemplate",
 	"ec2:DescribeImages", "ec2:DescribeSubnets", "ec2:DescribeSecurityGroups",
 }
