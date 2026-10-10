@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -192,11 +193,13 @@ func TestRealGatewayRoutesPricingToTheFacade(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const before = "{service: pricing, name: GetProducts, protocol: json, backend: floci,"
-	if strings.Count(string(raw), before) != 1 {
-		t.Fatalf("expected exactly one pricing:GetProducts line routed to floci")
+	// The real ops.yaml may route GetProducts to floci (before the S0 table is applied) or to pricing-facade
+	// (after). Force pricing-facade in the temp copy so the test holds in both states.
+	re := regexp.MustCompile(`(\{service: pricing, name: GetProducts, protocol: json, backend: )[a-z][a-z0-9-]*`)
+	if len(re.FindAll(raw, -1)) != 1 {
+		t.Fatalf("expected exactly one pricing:GetProducts line in ops.yaml")
 	}
-	switched := strings.Replace(string(raw), before, "{service: pricing, name: GetProducts, protocol: json, backend: pricing-facade,", 1)
+	switched := string(re.ReplaceAll(raw, []byte("${1}pricing-facade")))
 	path := t.TempDir() + "/ops.yaml"
 	if err := os.WriteFile(path, []byte(switched), 0o644); err != nil {
 		t.Fatal(err)

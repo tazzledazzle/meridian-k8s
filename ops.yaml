@@ -20,7 +20,7 @@ ops:
   - {service: ec2, name: CreateTags, protocol: query, backend: floci, fidelity: behavior-inferred}
   - {service: ec2, name: DescribeSpotPriceHistory, protocol: query, backend: floci, fidelity: behavior-inferred}
   # --- pricing ---
-  - {service: pricing, name: GetProducts, protocol: json, backend: floci, fidelity: behavior-inferred}
+  - {service: pricing, name: GetProducts, protocol: json, backend: pricing-facade, fidelity: behavior-inferred}
   # --- eks ---
   - {service: eks, name: DescribeCluster, protocol: restjson, backend: floci, fidelity: behavior-inferred}
   - {service: eks, name: CreateCluster, protocol: restjson, backend: floci, fidelity: behavior-inferred}
