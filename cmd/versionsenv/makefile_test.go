@@ -79,18 +79,18 @@ func TestAdvMakeBuildProducesEveryBinary(t *testing.T) {
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("make build: %v\n%s", err, out)
 	}
-	for _, n := range []string{"aws-gateway", "awscall", "s0probe", "versionsenv", "node-registrar"} {
+	for _, n := range []string{"aws-gateway", "awscall", "s0probe", "versionsenv", "node-registrar", "pricing-facade"} {
 		st, err := os.Stat(filepath.Join(d, "bin", n))
 		if err != nil || st.Mode()&0o111 == 0 {
 			t.Errorf("bin/%s: %v", n, err)
 		}
 	}
 	ents, _ := os.ReadDir(filepath.Join(d, "bin"))
-	if len(ents) != 5 { // every cmd/ directory builds one binary; s0probe joined in Task 8, node-registrar in Task 10
+	if len(ents) != 6 { // every cmd/ directory builds one binary; s0probe joined in Task 8, node-registrar in Task 10, pricing-facade in Task 13
 		var names []string
 		for _, e := range ents {
 			names = append(names, e.Name())
 		}
-		t.Errorf("bin has %v, want exactly the five binaries", names)
+		t.Errorf("bin has %v, want exactly the six binaries", names)
 	}
 }
