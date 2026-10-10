@@ -107,7 +107,7 @@ make s0-down         # needs Docker: delete the cluster and the stack
 
 ## Testing
 
-Every package except `cmd/node-registrar` has unit tests. The gateway, SigV4, `awscall`, probe, trace, and versions packages also have adversarial tests. Five packages have Go fuzz targets (`internal/awsapi`, `internal/awscall`, `internal/gateway`, `internal/s0probe`, `internal/trace`).
+Every package except `cmd/node-registrar` has unit tests. The gateway, SigV4, `awscall`, probe, trace, and versions packages also have adversarial tests. Seven packages have Go fuzz targets: `internal/awsapi`, `internal/awscall`, `internal/gateway`, `internal/s0probe`, `internal/trace`, `internal/versions` and `cmd/awscall`.
 
 ```sh
 make test            # go test ./...

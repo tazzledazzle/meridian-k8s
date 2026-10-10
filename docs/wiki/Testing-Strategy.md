@@ -42,8 +42,8 @@ Other skips state their reason in the same way, for example tests that need `mak
 
 Run on this checkout, `go test ./... -count=1 -v`:
 
-- 384 top-level Go tests pass, 0 fail, 5 skip at the top level.
-- The Python suite runs 115 tests, all OK.
+- On 2026-10-10: 384 top-level Go tests passed, 0 failed, 5 skipped at the top level (the skips are the accepted deviations).
+- On 2026-10-10: the Python suite ran 115 tests, all OK.
 - Per-package coverage from `criterion3.md`: `catalog` 100.0%, `fakeec2` 98.5%, `noderegistrar` 86.2%. `cmd/node-registrar/main.go` is thin wiring with no unit test.
 - The pre-merge check for the registrar work was `go build ./... && go vet ./... && gofmt -l internal cmd && go test -race -count=1 ./...`.
 
