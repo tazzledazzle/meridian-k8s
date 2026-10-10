@@ -70,9 +70,10 @@ type Injector struct {
 }
 
 // client returns the HTTP client with redirects disabled (a gateway never redirects, and a
-// redirect could carry a signed request to another host) and a timeout if the caller set none.
+// redirect could carry a signed request to another host). Without a caller-supplied client it applies a 15 s
+// timeout and ignores HTTP_PROXY/HTTPS_PROXY; a caller-supplied client is used as given, so its timeout is the caller's.
 func (in *Injector) client() *http.Client {
-	c := http.Client{Timeout: 15 * time.Second}
+	c := http.Client{Timeout: 15 * time.Second, Transport: directTransport()}
 	if in.Client != nil {
 		c = *in.Client // copy so the caller's client is not modified
 	}
@@ -102,12 +103,36 @@ func (in *Injector) validate() error {
 // Validate reports a configuration error (endpoint, region, credentials, queue name) without making a request.
 func (in *Injector) Validate() error { return in.redact(in.validate()) }
 
-// redact removes the secret from an error so it can never reach a log or terminal.
-func (in *Injector) redact(err error) error {
-	if err == nil || in.Secret == "" || !strings.Contains(err.Error(), in.Secret) {
-		return err
+// directTransport is the default transport without the proxy environment: a backend call must go to the gateway
+// itself, and a proxy variable in the container would send it elsewhere (or hide that no route exists).
+func directTransport() *http.Transport {
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.Proxy = nil
+	return t
+}
+
+var signatureRE = regexp.MustCompile(`Signature=[0-9a-fA-F]+`)
+
+// scrub hides the secret, the access key id and any SigV4 signature in text that may come from a backend.
+func (in *Injector) scrub(s string) string {
+	if in.Secret != "" {
+		s = strings.ReplaceAll(s, in.Secret, "***")
 	}
-	return errors.New(strings.ReplaceAll(err.Error(), in.Secret, "***"))
+	if in.Access != "" {
+		s = strings.ReplaceAll(s, in.Access, "***")
+	}
+	return signatureRE.ReplaceAllString(s, "Signature=***")
+}
+
+// redact removes the secret, the access key id and signatures from an error so none can reach a log or terminal.
+func (in *Injector) redact(err error) error {
+	if err == nil {
+		return nil
+	}
+	if msg := in.scrub(err.Error()); msg != err.Error() {
+		return errors.New(msg)
+	}
+	return err
 }
 
 func (in *Injector) send(ctx context.Context, req *http.Request) ([]byte, error) {
@@ -124,10 +149,7 @@ func (in *Injector) send(ctx context.Context, req *http.Request) ([]byte, error)
 		return nil, fmt.Errorf("response too large (over %d bytes)", maxResponse)
 	}
 	if resp.StatusCode != http.StatusOK {
-		snippet := string(b)
-		if in.Secret != "" {
-			snippet = strings.ReplaceAll(snippet, in.Secret, "***") // scrub before truncating
-		}
+		snippet := in.scrub(string(b)) // scrub before truncating, so a value cut by the limit is not half-visible
 		return nil, fmt.Errorf("HTTP %d: %.200s", resp.StatusCode, snippet)
 	}
 	return b, nil
@@ -221,7 +243,7 @@ func (in *Injector) Warn(ctx context.Context, instanceID string) error {
 		QueueURL string `json:"QueueUrl"`
 	}
 	if err := json.Unmarshal(b, &q); err != nil || q.QueueURL == "" {
-		return fmt.Errorf("GetQueueUrl returned no QueueUrl: %.200s", b)
+		return in.redact(fmt.Errorf("GetQueueUrl returned no QueueUrl: %.200s", in.scrub(string(b))))
 	}
 	_, err = in.json(ctx, "AmazonSQS.SendMessage", map[string]string{
 		"QueueUrl": q.QueueURL, "MessageBody": string(Event(in.Region, instanceID, in.now())),

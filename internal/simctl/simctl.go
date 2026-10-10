@@ -118,8 +118,12 @@ func probe(ctx context.Context, rawURL string, timeout time.Duration, out, errOu
 		fmt.Fprintln(errOut, "probe URL is not valid")
 		return exitUsage
 	}
+	// No proxy: the probe asks whether THIS host has a route, and a proxy variable would answer for another path.
+	direct := http.DefaultTransport.(*http.Transport).Clone()
+	direct.Proxy = nil
 	client := &http.Client{
 		Timeout:       timeout,
+		Transport:     direct,
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}
 	resp, err := client.Do(req)
