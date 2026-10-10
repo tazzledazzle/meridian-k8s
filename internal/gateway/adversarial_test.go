@@ -71,8 +71,10 @@ func advOps(t testing.TB) ops.List {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(l.Ops) != 35 {
-		t.Fatalf("expected 35 ops, got %d", len(l.Ops))
+	// Tripwire: the routing tests below iterate every entry, so a change to ops.yaml should be noticed here.
+	// 36 = the plan's 35 plus ec2:DescribeInstanceStatus (seen in Karpenter 1.14.1's trace, Task 8).
+	if len(l.Ops) != 36 {
+		t.Fatalf("expected 36 ops, got %d", len(l.Ops))
 	}
 	return l
 }
@@ -1128,7 +1130,8 @@ func TestAdvConcurrentSignedRequestsAcrossBackends(t *testing.T) {
 	if bad.Load() != 0 {
 		t.Fatalf("%d misrouted responses", bad.Load())
 	}
-	if want := rounds * 34; oc.n() != want {
+	// One call per routable operation per round; eks:CreateCluster is skipped above (its body shape differs).
+	if want := rounds * (len(l2.Ops) - 1); oc.n() != want {
 		t.Fatalf("OnCall count %d want %d", oc.n(), want)
 	}
 	for n, r := range recs {
