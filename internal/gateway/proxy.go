@@ -3,7 +3,6 @@ package gateway
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -29,7 +28,7 @@ func Proxy(rawURL string) (http.Handler, error) {
 func newProxy(rawURL string, timeout time.Duration) (http.Handler, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid backend URL: %w", err)
+		return nil, errors.New("invalid backend URL") // url.Parse errors embed the whole URL, userinfo included
 	}
 	if (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		return nil, errors.New("backend URL must be an absolute http(s) URL with a host, without credentials, query or fragment")

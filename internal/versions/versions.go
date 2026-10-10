@@ -5,6 +5,7 @@ package versions
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -22,6 +23,9 @@ type Entry struct {
 type File struct {
 	Components []Entry `yaml:"components"`
 }
+
+// digestRE accepts only a full sha256 digest in lowercase hex.
+var digestRE = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 
 // required lists the components G0 cannot run without, with the kind each must have.
 var required = map[string]string{
@@ -60,7 +64,7 @@ func (f File) Validate() error {
 			errs = append(errs, fmt.Errorf("%s: version must be pinned, got %q", e.Name, e.Version))
 		}
 		// Images are pinned by digest so a re-pushed tag cannot change what runs.
-		if e.Kind == "image" && !(strings.HasPrefix(e.Digest, "sha256:") && len(e.Digest) == 71) {
+		if e.Kind == "image" && !digestRE.MatchString(e.Digest) {
 			errs = append(errs, fmt.Errorf("%s: image needs a sha256 digest, got %q", e.Name, e.Digest))
 		}
 		if e.Kind == "image" && e.Repo == "" {

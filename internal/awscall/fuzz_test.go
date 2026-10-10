@@ -1,7 +1,6 @@
 package awscall
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -12,15 +11,6 @@ func FuzzBuildQuery(f *testing.F) {
 	f.Add("日本=é", "A\nB", "ec2", "a/b")
 	f.Fuzz(func(t *testing.T, param, action, service, region string) {
 		// Odd regions are covered by TestBugRegionWithScopeDelimiterIsAcceptedButUnverifiable.
-		if len(region) > 32 {
-			region = "us-west-2"
-		}
-		for _, c := range region {
-			if !(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-') {
-				region = "us-west-2"
-				break
-			}
-		}
 		r, body, err := BuildQuery("http://127.0.0.1:4566", service, region, action, "2016-11-15", []string{param}, advAK, advSecret, advNow)
 		if err != nil {
 			return
@@ -39,9 +29,6 @@ func FuzzBuildREST(f *testing.F) {
 	f.Add("/a%zz", "POST", "{}")
 	f.Add("/a b/../c?x=y", "DELETE", "x")
 	f.Fuzz(func(t *testing.T, path, method, body string) {
-		if strings.Contains(path, "?") { // known: TestBugBuildersNeverReturnUnsignedRequestWithoutError
-			t.Skip()
-		}
 		r, b, err := BuildREST("http://127.0.0.1:4566", "eks", "us-west-2", method, path, body, advAK, advSecret, advNow)
 		if err != nil {
 			return

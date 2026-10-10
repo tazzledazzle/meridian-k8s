@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -118,6 +119,8 @@ func main() {
 
 // run is the whole program without process globals. It returns the exit code.
 // If ready is non-nil, the bound listen address is sent on it once the server accepts connections.
+var accessKeyRE = regexp.MustCompile(`^[A-Za-z0-9_.@+=-]{1,128}$`)
+
 func run(ctx context.Context, args []string, getenv func(string) string, stdout, stderr io.Writer, ready chan<- string) int {
 	logger := log.New(stderr, "aws-gateway: ", log.LstdFlags)
 	fail := func(format string, a ...any) int {
@@ -148,6 +151,9 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 	access, secret := getenv("AWS_ACCESS_KEY_ID"), getenv("AWS_SECRET_ACCESS_KEY")
 	if access == "" || secret == "" {
 		return fail("AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required; run `make init`")
+	}
+	if !accessKeyRE.MatchString(access) { // same character set awsapi.Verify accepts
+		return fail("AWS_ACCESS_KEY_ID must be 1-128 characters of A-Z a-z 0-9 _ . @ + = -")
 	}
 	if err := gateway.CheckBind(*listen, *allowAny); err != nil {
 		return fail("%v", err)
