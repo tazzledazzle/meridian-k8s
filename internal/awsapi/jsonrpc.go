@@ -32,7 +32,9 @@ func WriteJSON(w http.ResponseWriter, status int, contentType string, v any) {
 // WriteXML writes an XML body, as query-protocol services do.
 func WriteXML(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "text/xml;charset=UTF-8")
-	w.Header().Set("X-Amzn-Requestid", NewRequestID())
+	if w.Header().Get("X-Amzn-Requestid") == "" { // a handler that already put an id in the body sets the same one here
+		w.Header().Set("X-Amzn-Requestid", NewRequestID())
+	}
 	w.WriteHeader(status)
 	_ = xml.NewEncoder(w).Encode(v)
 }

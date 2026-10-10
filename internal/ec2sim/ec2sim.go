@@ -188,6 +188,7 @@ func (h *handler) describe(w http.ResponseWriter, q *awsapi.Node, fail func(int,
 		}
 		resp.Items = append(resp.Items, toItem(t))
 	}
+	w.Header().Set("X-Amzn-Requestid", resp.ReqID) // header and <requestId> carry the same id, as in real EC2
 	awsapi.WriteXML(w, http.StatusOK, resp)
 }
 
@@ -281,12 +282,12 @@ func glob(pat, s string) bool {
 	p, i, star, mark := 0, 0, -1, 0
 	for i < len(s) {
 		switch {
+		case p < len(pat) && pat[p] == '*': // test the wildcard first: a literal '*' in s must not consume it
+			star, mark = p, i
+			p++
 		case p < len(pat) && (pat[p] == '?' || pat[p] == s[i]):
 			p++
 			i++
-		case p < len(pat) && pat[p] == '*':
-			star, mark = p, i
-			p++
 		case star >= 0:
 			p, mark = star+1, mark+1
 			i = mark

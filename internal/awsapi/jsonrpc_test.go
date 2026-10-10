@@ -33,3 +33,22 @@ func TestWriteJSONAndWriteXMLSetContentTypes(t *testing.T) {
 		t.Fatalf("xml: ct=%q body=%q", rec.Header().Get("Content-Type"), rec.Body)
 	}
 }
+
+// A handler that puts a request id in the body must be able to put the same id in the header.
+func TestWriteXMLKeepsARequestIDThatIsAlreadySet(t *testing.T) {
+	rec := httptest.NewRecorder()
+	rec.Header().Set("X-Amzn-Requestid", "fixed-id")
+	WriteXML(rec, 200, struct {
+		XMLName struct{} `xml:"Ping"`
+	}{})
+	if got := rec.Header().Get("X-Amzn-Requestid"); got != "fixed-id" {
+		t.Fatalf("request id = %q, want the one the caller set", got)
+	}
+	rec = httptest.NewRecorder()
+	WriteXML(rec, 200, struct {
+		XMLName struct{} `xml:"Ping"`
+	}{})
+	if rec.Header().Get("X-Amzn-Requestid") == "" {
+		t.Fatal("a request id must still be minted when the caller sets none")
+	}
+}
