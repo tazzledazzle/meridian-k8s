@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: inflate, namespace: default}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: inflate}}
+  template:
+    metadata: {labels: {app: inflate}}
+    spec:
+      nodeSelector: {karpenter.sh/nodepool: default}   # only Karpenter-launched nodes may run this
+      tolerations:
+        # Every Karpenter node here is a KWOK node, which carries this taint.
+        - {key: kwok.x-k8s.io/node, operator: Equal, value: fake, effect: NoSchedule}
+      containers:
+        - name: pause
+          image: registry.k8s.io/pause:3.10
+          resources: {requests: {cpu: "1", memory: 1Gi}}

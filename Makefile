@@ -1,4 +1,4 @@
-.PHONY: init test test-scripts lint-versions env-images build build-linux s0-up s0-down seed trace-show check-sock s0-probe s0-probe-moto s0-decide
+.PHONY: kwok-up vendor-kwok deploy-registrar init test test-scripts lint-versions env-images build build-linux s0-up s0-down seed trace-show check-sock s0-probe s0-probe-moto s0-decide
 
 # Generates local credentials; safe to run repeatedly.
 init:
@@ -70,3 +70,15 @@ s0-probe-moto: build-linux
 # The Moto report is used only when it exists. Order of trial for the coupled EC2 group: floci, moto, ec2-sim.
 s0-decide:
 	python3 scripts/s0matrix.py --report floci=docs/s0/report.json $(if $(wildcard docs/s0/report-moto.json),--report moto=docs/s0/report-moto.json,) ops.yaml $(if $(APPLY),--apply,)
+
+# Applies the vendored KWOK release to the running cluster (idempotent; controller image pinned by digest).
+kwok-up: env-images
+	./scripts/kwok-up.sh
+
+# Re-downloads and re-verifies the KWOK manifests for the version in versions.yaml (needs a network).
+vendor-kwok: env-images
+	./scripts/vendor-kwok.sh
+
+# Builds node-registrar, imports it into the k3d cluster and applies its manifest (idempotent).
+deploy-registrar: init env-images
+	./scripts/deploy-registrar.sh

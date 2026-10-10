@@ -1,0 +1,16 @@
+# Applied on top of the vendored kwok.yaml with its own server-side-apply field manager (see scripts/kwok-up.sh):
+# resource limits and a locked-down container. The vendored release sets neither.
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: kwok-controller, namespace: kube-system}
+spec:
+  template:
+    spec:
+      containers:
+        - name: kwok-controller
+          resources:
+            requests: {cpu: 20m, memory: 32Mi}
+            limits: {cpu: 500m, memory: 128Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"]}

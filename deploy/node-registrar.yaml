@@ -1,0 +1,71 @@
+# node-registrar: plays the kubelet's part for simulated EC2 instances (creates/deletes KWOK Nodes).
+# Its own ServiceAccount, least-privilege RBAC (Nodes only), non-root, read-only root filesystem.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: node-registrar
+  namespace: kube-system
+  labels: {app.kubernetes.io/name: node-registrar}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: node-registrar
+  labels: {app.kubernetes.io/name: node-registrar}
+rules:
+  # Nodes are cluster-scoped, so this has to be a ClusterRole. Nothing else is granted.
+  # The registrar only lists/deletes nodes carrying its own managed-by label (enforced in code, not by RBAC).
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: node-registrar
+  labels: {app.kubernetes.io/name: node-registrar}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: node-registrar}
+subjects:
+  - {kind: ServiceAccount, name: node-registrar, namespace: kube-system}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-registrar
+  namespace: kube-system
+  labels: {app.kubernetes.io/name: node-registrar}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}                     # one registrar at a time; never two reconcilers racing
+  selector:
+    matchLabels: {app.kubernetes.io/name: node-registrar}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: node-registrar}
+    spec:
+      serviceAccountName: node-registrar          # never the default ServiceAccount
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532                          # distroless nonroot
+        runAsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: node-registrar
+          image: meridian/node-registrar:s0       # built locally and imported into the cluster (make deploy-registrar)
+          imagePullPolicy: Never                  # never reaches a registry
+          args:
+            - -ec2-endpoint=http://aws-gateway:4566   # EC2 goes through the gateway like any AWS client
+            - -cluster=meridian-g0
+            - -interval=2s
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom: {secretKeyRef: {name: aws-creds, key: AWS_ACCESS_KEY_ID}}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom: {secretKeyRef: {name: aws-creds, key: AWS_SECRET_ACCESS_KEY}}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 100m, memory: 64Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
