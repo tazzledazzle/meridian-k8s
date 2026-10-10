@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "meridian",
+  "project_id": "42d03b91-146c-4099-9376-eac34f16f6ad"
+}
