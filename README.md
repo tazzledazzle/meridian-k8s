@@ -9,7 +9,7 @@ Meridian is a simulated AWS plane that lets unmodified Karpenter provision nodes
 Gate G0, the Karpenter proof gate, is **in progress**. The gate does not pass yet.
 
 - Real, unmodified Karpenter 1.14.1 runs on a local k3d cluster against the simulated plane.
-- By hand on the live stack, Karpenter launched an instance through `CreateFleet`, received a KWOK-backed Node, scheduled a pod on it, and tore it down. That covers criteria 1-3 of 8. The record is in [docs/s0/criterion3.md](docs/s0/criterion3.md).
+- By hand on the live stack, Karpenter launched an instance through `CreateFleet`, received a KWOK-backed Node, scheduled a pod on it, and tore it down. That covers criteria 1-3 of 8 ([docs/s0/criterion3.md](docs/s0/criterion3.md)). A simulated spot interruption also drained the node, replaced it and removed it before the grace period ended, which covers criterion 4 by hand ([docs/s0/criterion4.md](docs/s0/criterion4.md)).
 - A contract probe checked Floci 2.2.0 against the 36 operations in [ops.yaml](ops.yaml): 35 of 37 checks passed. Floci serves 34 operations. A reference `ec2-sim` and a `pricing-facade` serve the other two ([docs/s0/decision.md](docs/s0/decision.md)). Against the routed plane, the probe passes 37 of 37 checks ([docs/s0/report-routed.md](docs/s0/report-routed.md)).
 - The stack used about 850 MiB with one node. Peak memory is not measured yet.
 
@@ -28,11 +28,11 @@ Meridian puts a SigV4-verifying gateway in front of one or more backends and rou
 | S0 contract probe and decision script | Done, tested |
 | Floci 2.2.0 backend for 34 of 36 operations | Done |
 | `node-registrar` and vendored KWOK (instances become Nodes) | Done, tested |
-| Karpenter 1.14.1 on k3d, criteria 1-3 of 8 | Done by hand on the live stack |
+| Karpenter 1.14.1 on k3d, criteria 1-4 of 8 | Done by hand on the live stack |
 | Reference-data `ec2-sim` (`DescribeInstanceTypes`) | Done, tested |
 | `pricing-facade` (`pricing:GetProducts`) | Done, tested |
 | Approved routing table applied to `ops.yaml` | Done |
-| Spot interruption (`simctl`) | Planned |
+| Spot interruption injector (`simctl`) | Done, tested |
 | Isolated, no-internet gate stack | Planned |
 | `make gate-karpenter` and the eight-criteria gate test | Planned |
 | CI | Planned |
@@ -92,6 +92,7 @@ make s0-down         # needs Docker: delete the cluster and the stack
 | `cmd/s0probe`, `internal/s0probe`, `scripts/s0matrix.py` | Contract probe and backend decision |
 | `cmd/node-registrar`, `internal/noderegistrar` | Instances to KWOK-backed Nodes |
 | `internal/trace`, `cmd/awscall`, `internal/awscall` | Call recording and a small AWS client |
+| `cmd/simctl`, `internal/spot`, `internal/simctl` | Spot interruption injector |
 | `cmd/ec2-sim`, `internal/ec2sim`, `cmd/pricing-facade`, `internal/pricingfacade` | The two small backends for the operations Floci cannot serve |
 | `internal/catalog` | Region data: AZs, instance types, ENI limits, prices |
 | `deploy/` | Compose file, Karpenter values, vendored KWOK, workloads |
@@ -108,7 +109,7 @@ make s0-down         # needs Docker: delete the cluster and the stack
 
 ## Testing
 
-Every package except `cmd/node-registrar` has unit tests. The gateway, SigV4, `awscall`, probe, trace, and versions packages also have adversarial tests. Nine packages have Go fuzz targets: `internal/awsapi`, `internal/awscall`, `internal/gateway`, `internal/s0probe`, `internal/trace`, `internal/versions`, `internal/ec2sim`, `internal/pricingfacade` and `cmd/awscall`.
+Every package except `cmd/node-registrar` has unit tests. The gateway, SigV4, `awscall`, probe, trace, and versions packages also have adversarial tests. Ten packages have Go fuzz targets: `internal/awsapi`, `internal/awscall`, `internal/gateway`, `internal/s0probe`, `internal/trace`, `internal/versions`, `internal/ec2sim`, `internal/pricingfacade`, `internal/spot` and `cmd/awscall`.
 
 ```sh
 make test            # go test ./...

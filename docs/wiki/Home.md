@@ -10,13 +10,13 @@ Not validated against real AWS. Every result in this wiki comes from a local run
 - A contract probe (`s0probe`) and a decision script (`scripts/s0matrix.py`) that choose a backend for each operation.
 - `node-registrar` and KWOK, which turn instances into schedulable Nodes.
 - A local stack (`make s0-up`) with Floci 2.2.0, the gateway, a k3d cluster and Karpenter 1.14.1.
-- Result: Karpenter criteria 1 to 3 pass by hand on this stack.
+- Result: Karpenter criteria 1 to 4 pass by hand on this stack.
 
 <!-- STATUS-BLOCK:START (update here and in Roadmap-and-Status only) -->
 ## Status
 
-- Done: spike S0, gateway, node-registrar, KWOK, the reference `ec2-sim` and the `pricing-facade`, criteria 1 to 3 by hand. The approved table is applied: 34 operations run on Floci, `DescribeInstanceTypes` on `ec2-sim`, `pricing:GetProducts` on `pricing-facade`. The probe passes 37 of 37 checks against this routed plane (it passed 35 of 37 against Floci alone), and Karpenter logs no AWS errors.
-- Does not exist yet: `simctl` (spot interruption injector), the isolated no-internet gate stack, `make gate-karpenter` with its eight criteria, the gate test, CI, ADRs.
+- Done: spike S0, gateway, node-registrar, KWOK, the reference `ec2-sim` and the `pricing-facade`, `simctl`, criteria 1 to 4 by hand. The approved table is applied: 34 operations run on Floci, `DescribeInstanceTypes` on `ec2-sim`, `pricing:GetProducts` on `pricing-facade`. The probe passes 37 of 37 checks against this routed plane (it passed 35 of 37 against Floci alone), and Karpenter logs no AWS errors.
+- Does not exist yet: the isolated no-internet gate stack, `make gate-karpenter` with its eight criteria, the gate test, CI, ADRs.
 <!-- STATUS-BLOCK:END -->
 
 ## Map of the wiki
@@ -32,6 +32,7 @@ Not validated against real AWS. Every result in this wiki comes from a local run
 | [[Testing Strategy]] | How the code is tested |
 | [[Running It]] | Commands, in order, and known problems |
 | [[Decisions]] | D1 to D15 and the open assumptions |
+| [[Spot Interruptions]] | How a simulated interruption reaches Karpenter, and the live evidence |
 | [[Roadmap and Status]] | Done, in progress, planned, open questions |
 | [[Glossary]] | Terms used across the pages |
 

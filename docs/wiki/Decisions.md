@@ -29,7 +29,7 @@ Each is open until a test or run records a result.
 | Assumption | Verify with |
 |---|---|
 | Floci mock modes stay adequate for `CreateFleet` and the instance lifecycle | The planned gate; criterion 3 showed launch and terminate |
-| Missing `instanceLifecycle=spot` makes Karpenter label spot as on-demand | `simctl` tests and the spot criterion |
+| Missing `instanceLifecycle=spot` makes Karpenter label spot as on-demand | Partly verified: the criterion 4 run handled the node as spot ([[Spot Interruptions]]) |
 | Missing `networkInfo.maximumNetworkInterfaces` may cap pods per node | Rerun after `ec2-sim` exists |
 | Karpenter never sends `UNSIGNED-PAYLOAD` | Count `Verify` rejections during the gate |
 | Floci 2.2.0 behavior is stable (A7) | Planned CI rule: fail if the pin changes without a refreshed report |

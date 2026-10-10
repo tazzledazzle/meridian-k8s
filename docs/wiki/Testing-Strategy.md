@@ -24,6 +24,8 @@ Infrastructure tasks that share the Docker daemon run inline, without a tester.
 | `internal/awscall` | `FuzzBuildQuery`, `FuzzBuildREST` |
 | `internal/s0probe` | `FuzzParseXML`, `FuzzGetPath`, `FuzzParsePrice`, `FuzzSummarizeJSON`, `FuzzSummarizeMarkdown` |
 | `internal/versions` | `FuzzCheckEnv` |
+| `internal/spot` | `FuzzEvent`, `FuzzEventKarpenterRoundTrip`, `FuzzInjectorValidateNeverPanics`, `FuzzValidatorsAgreeWithSpec` |
+| `internal/simctl` | `FuzzRunArgs`, `FuzzProbeURL` |
 | `internal/ec2sim` | `FuzzDescribeInstanceTypes`, `FuzzGlobMatchesRegexp`, `FuzzPagedWalkEqualsUnpaged`, `FuzzNextToken` |
 | `internal/pricingfacade` | `FuzzGetProducts`, `FuzzRawRequest`, `FuzzTokenMutation`, `FuzzFilterValues` |
 | `cmd/awscall` | `FuzzCLIArgs` |

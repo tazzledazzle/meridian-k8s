@@ -28,7 +28,7 @@ Floci reports healthy before every service answers. STS answered first and EC2 `
 
 ## No instanceLifecycle=spot
 
-`CreateFleet` reports `Lifecycle: spot`, but `DescribeInstances` omits `instanceLifecycle=spot`. Observed in `smoke.md` and the probe report. Karpenter may therefore label spot instances on-demand. This is untested: the criterion 3 run used on-demand only.
+`CreateFleet` reports `Lifecycle: spot`, but `DescribeInstances` omits `instanceLifecycle=spot`. Observed in `smoke.md` and the probe report. Karpenter still handled the node as spot in the criterion 4 run, because it takes the capacity type from the NodeClaim. `simctl` refuses such an instance unless you pass `-any-market` ([[Spot Interruptions]]).
 
 ## Other gaps
 

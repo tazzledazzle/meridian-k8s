@@ -6,6 +6,7 @@
 - [[The S0 Spike]]
 - [[Findings About Floci]]
 - [[Nodes Without Machines]]
+- [[Spot Interruptions]]
 - [[Security Model]]
 - [[Testing Strategy]]
 - [[Running It]]
