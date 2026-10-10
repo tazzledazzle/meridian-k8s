@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	ec2Version = "2016-11-15"
-	iamVersion = "2010-05-08"
-	stsVersion = "2011-06-15"
-	probeType  = "m5.large"
-	fleetCheck = "ec2:CreateFleet" // the gate for the coupled EC2 matrix (amendment A2)
+	ec2Version           = "2016-11-15"
+	iamVersion           = "2010-05-08"
+	stsVersion           = "2011-06-15"
+	probeType            = "m5.large"
+	unfilteredPricePages = 20                // pages read for the informational count of priced types
+	fleetCheck           = "ec2:CreateFleet" // the gate for the coupled EC2 matrix (amendment A2)
 )
 
 var versionRE = regexp.MustCompile(`^\d+\.\d+`)
@@ -543,7 +544,9 @@ func Checks() []Check {
 			e.State["runInstance"] = ids[0]
 			return ids[0], nil
 		}},
-		{Name: "ec2:TerminateInstances", Group: "ec2", GatedBy: fleetCheck, Needs: []string{"instance"}, Run: func(ctx context.Context, e *Env) (string, error) {
+		// Cleanup: when CreateFleet launched an instance but then failed a field check, the instance is still terminated
+		// and the template deleted (the gate is lifted, the fleet failure stays in its own row).
+		{Name: "ec2:TerminateInstances", Group: "ec2", GatedBy: fleetCheck, Cleanup: true, Needs: []string{"instance"}, Run: func(ctx context.Context, e *Env) (string, error) {
 			ids := []string{e.State["instance"]}
 			if e.State["runInstance"] != "" {
 				ids = append(ids, e.State["runInstance"])
@@ -579,7 +582,7 @@ func Checks() []Check {
 			}
 			return strings.Join(cur, ","), nil
 		}},
-		{Name: "ec2:DeleteLaunchTemplate", Group: "ec2", GatedBy: fleetCheck, Needs: []string{"lt"}, Run: func(ctx context.Context, e *Env) (string, error) {
+		{Name: "ec2:DeleteLaunchTemplate", Group: "ec2", GatedBy: fleetCheck, Cleanup: true, Needs: []string{"lt"}, Run: func(ctx context.Context, e *Env) (string, error) {
 			_, err := e.Query(ctx, "ec2", ec2Version, "DeleteLaunchTemplate", "LaunchTemplateName="+e.State["lt"])
 			return "", err
 		}},
@@ -663,11 +666,15 @@ func Checks() []Check {
 			if err != nil {
 				return "", err
 			}
-			all, err := listProducts(ctx, e, priceFilters(e.Cfg.Region))
+			// The listing only feeds a count in the detail, so it is bounded and a long listing is not a failure.
+			all, truncated, err := listProductsMax(ctx, e, priceFilters(e.Cfg.Region), unfilteredPricePages)
 			if err != nil {
 				return "", fmt.Errorf("unfiltered-by-type listing: %w", err)
 			}
 			detail := fmt.Sprintf("%s $%v/h; %d priced types", probeType, price, len(all))
+			if truncated {
+				detail = fmt.Sprintf("%s $%v/h; at least %d priced types (truncated at %d pages)", probeType, price, len(all), unfilteredPricePages)
+			}
 			if tc := e.State["typeCount"]; tc != "" {
 				detail += " of " + tc + " listed by EC2"
 			}

@@ -54,7 +54,7 @@ func Markdown(title string, rs []Result) string {
 	b.WriteString("| Check | Group | Status | Detail |\n|---|---|---|---|\n")
 	for _, r := range rs {
 		// Pipes and newlines would break the table, so flatten them.
-		d := strings.NewReplacer("|", "/", "\n", " ").Replace(r.Detail)
+		d := strings.NewReplacer("|", "/", "\r", " ", "\n", " ").Replace(r.Detail)
 		fmt.Fprintf(&b, "| %s | %s | %s | %s |\n", r.Name, r.Group, r.Status, d)
 	}
 	if fg := FailedGroups(rs); len(fg) > 0 {

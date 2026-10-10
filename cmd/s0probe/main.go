@@ -58,6 +58,9 @@ func run(args []string, getenv func(string) string, stdout, stderr io.Writer) in
 		fmt.Fprintf(stderr, "s0probe: "+format+"\n", a...)
 		return 2
 	}
+	if fs.NArg() > 0 {
+		return usage("unexpected argument %q: everything is a flag (see -h); for several groups use -groups sts,iam", fs.Arg(0))
+	}
 
 	// Fail closed on anything that is not usable before a single request is sent.
 	access, secret := getenv("AWS_ACCESS_KEY_ID"), getenv("AWS_SECRET_ACCESS_KEY")
@@ -115,7 +118,10 @@ func run(args []string, getenv func(string) string, stdout, stderr io.Writer) in
 			fmt.Fprintln(stderr, "s0probe:", redact(err.Error(), access, secret))
 			return 1
 		}
-		_ = json.NewEncoder(stdout).Encode(got)
+		if err := json.NewEncoder(stdout).Encode(got); err != nil {
+			fmt.Fprintln(stderr, "s0probe: encode prices:", err)
+			return 1
+		}
 		return 0
 	}
 

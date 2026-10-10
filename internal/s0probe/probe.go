@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/tazzledazzle/meridian/internal/awscall"
 )
@@ -111,6 +112,9 @@ type Check struct {
 	// GatedBy names an earlier check. If that check did not pass, this one is skipped. EC2 uses it so that a
 	// failing ec2:CreateFleet skips the rest of the coupled instance-state matrix (amendment A2).
 	GatedBy string
+	// Cleanup lifts the gate when the gating check launched an instance (State["instance"] is set) even though it
+	// failed a later field check: the instance must not be left running and the template must not be left behind.
+	Cleanup bool
 	Run     func(ctx context.Context, e *Env) (detail string, err error)
 }
 
@@ -223,8 +227,17 @@ func (e *Env) now() time.Time {
 }
 
 // failure turns a non-200 answer into an error that shows what the backend said.
-func failure(r Resp) error {
-	msg := fmt.Sprintf("HTTP %d: %.240s", r.Status, strings.TrimSpace(string(r.Body)))
+// The body is redacted before it is cut to 240 bytes, so a secret straddling the cut cannot leak its first characters.
+func (e *Env) failure(r Resp) error {
+	body := redactor(e.Cfg).Replace(strings.TrimSpace(string(r.Body)))
+	if len(body) > 240 {
+		cut := 240
+		for cut > 0 && !utf8.RuneStart(body[cut]) {
+			cut--
+		}
+		body = body[:cut]
+	}
+	msg := fmt.Sprintf("HTTP %d: %s", r.Status, body)
 	if r.Attempts > 1 {
 		msg += fmt.Sprintf(" (after %d attempts)", r.Attempts)
 	}
@@ -241,7 +254,7 @@ func (e *Env) Query(ctx context.Context, service, version, action string, params
 		return nil, err
 	}
 	if r.Status != http.StatusOK {
-		return nil, failure(r)
+		return nil, e.failure(r)
 	}
 	n, err := ParseXML(r.Body)
 	if err != nil {
@@ -265,7 +278,7 @@ func (e *Env) JSONCall(ctx context.Context, service, target, jsonVersion string,
 		return nil, err
 	}
 	if r.Status != http.StatusOK {
-		return nil, failure(r)
+		return nil, e.failure(r)
 	}
 	return decodeObject(r.Body)
 }
@@ -292,7 +305,7 @@ func (e *Env) REST(ctx context.Context, service, method, path string, body any) 
 		return nil, err
 	}
 	if r.Status != http.StatusOK && r.Status != http.StatusCreated {
-		return nil, failure(r)
+		return nil, e.failure(r)
 	}
 	return decodeObject(r.Body)
 }
@@ -383,7 +396,7 @@ func Run(ctx context.Context, cfg Config, checks []Check) []Result {
 		switch {
 		case ctx.Err() != nil:
 			r.Status, r.Detail = "skip", "interrupted: "+ctx.Err().Error()
-		case gateBlocks(c, byName, &r):
+		case gateBlocks(c, byName, &r, e):
 		default:
 			var missing []string
 			for _, k := range c.Needs {
@@ -414,8 +427,8 @@ func Run(ctx context.Context, cfg Config, checks []Check) []Result {
 }
 
 // gateBlocks fills r with a skip result when the check's gate did not pass.
-func gateBlocks(c Check, done map[string]Result, r *Result) bool {
-	if c.GatedBy == "" {
+func gateBlocks(c Check, done map[string]Result, r *Result, e *Env) bool {
+	if c.GatedBy == "" || (c.Cleanup && e.State["instance"] != "") {
 		return false
 	}
 	g, ran := done[c.GatedBy]

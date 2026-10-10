@@ -191,7 +191,7 @@ class ArgumentValidation(RunScript):
 class CredentialsAndHardening(RunScript):
     def test_credentials_are_never_in_argv_but_reach_the_container_by_name(self):
         for rc in (0, 1, 2):
-            self.run_script("out", rc=rc, write="json")
+            self.run_script("out", rc=rc, write="md json")
             args = self.argv()
             for a in args:
                 self.assertNotIn(SECRET, a)
@@ -210,13 +210,13 @@ class CredentialsAndHardening(RunScript):
 
     def test_dollar_and_quote_characters_in_env_values_do_not_reach_argv_or_break_the_script(self):
         self.write(".env", "AWS_ACCESS_KEY_ID='AK IA'\nAWS_SECRET_ACCESS_KEY='p@ss $HOME \"q\" `id`'\n")
-        r = self.run_script("out", write="json")
+        r = self.run_script("out", write="md json")
         self.assertEqual(r.returncode, 0, r.stderr)
         for a in self.argv():
             self.assertNotIn("p@ss", a)
 
     def test_container_is_locked_down(self):
-        self.run_script("out", write="json")
+        self.run_script("out", write="md json")
         a = self.argv()
         self.assertEqual(a[0], "run")
         self.assertIn("--rm", a)
@@ -241,14 +241,14 @@ class CredentialsAndHardening(RunScript):
         self.assertEqual(a[a.index("-out") + 1], "/out")
 
     def test_network_name_comes_from_meridian_net(self):
-        self.run_script("out", write="json", env={"MERIDIAN_NET": "meridian-gate"})
+        self.run_script("out", write="md json", env={"MERIDIAN_NET": "meridian-gate"})
         a = self.argv()
         self.assertEqual(a[a.index("--network") + 1], "meridian-gate")
 
     def test_ami_parameter_uses_the_kubernetes_minor_of_the_pinned_k3s(self):
         for k3s, minor in [("v1.35.9-k3s1", "1.35"), ("1.36.0", "1.36"), ("v1.9.12+k3s2", "1.9"), ("v1.35", "1.35")]:
             self.write(".env.images", f"STATIC_IMAGE=img\nK3S_VERSION={k3s}\n")
-            self.run_script("out", write="json")
+            self.run_script("out", write="md json")
             a = self.argv()
             self.assertEqual(a[a.index("-ami-param") + 1], f"/aws/service/eks/optimized-ami/{minor}/amazon-linux-2023/x86_64/standard/recommended/image_id", k3s)
 
@@ -268,7 +268,7 @@ class CredentialsAndHardening(RunScript):
         }
         for label, want in cases.items():
             env = {} if label is None else {"S0_LABEL": label}
-            r = self.run_script("out", write="json", env=env)
+            r = self.run_script("out", write="md json", env=env)
             self.assertEqual(r.returncode, 0, (label, r.stderr))
             a = self.argv()
             self.assertEqual(a[a.index("-title") + 1], want, repr(label))
