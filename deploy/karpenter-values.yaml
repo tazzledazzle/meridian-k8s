@@ -1,0 +1,22 @@
+# Real Karpenter, unmodified, with its AWS SDK pointed at the simulated gateway.
+replicas: 1
+imagePullPolicy: IfNotPresent                 # the gate cluster has no route to a registry; images are preloaded
+logLevel: debug                              # debug logs show every AWS call attempt
+settings:
+  clusterName: meridian-g0
+  interruptionQueue: meridian-g0-interruption   # SQS queue seeded by scripts/seed-floci.sh
+controller:
+  env:
+    - name: AWS_ENDPOINT_URL                 # SDK-wide endpoint override: every AWS service goes to the gateway
+      value: http://aws-gateway:4566
+    - name: AWS_REGION
+      value: us-west-2
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef: {name: aws-creds, key: AWS_ACCESS_KEY_ID}
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef: {name: aws-creds, key: AWS_SECRET_ACCESS_KEY}
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {memory: 512Mi}

@@ -1,0 +1,102 @@
+# S0 stack: Floci behind our aws-gateway, with the gateway in trace mode.
+# Run with: make s0-up   (or: docker compose --env-file .env.images --env-file .env -f deploy/compose.s0.yaml up -d --build)
+name: meridian-g0
+
+networks:
+  meridian:
+    name: meridian            # k3d joins this network so pods can resolve "aws-gateway"
+
+services:
+  floci:
+    image: ${FLOCI_IMAGE}     # pinned by digest in versions.yaml
+    networks: [meridian]
+    environment:
+      FLOCI_DEFAULT_REGION: us-west-2     # the region Karpenter is configured for
+      FLOCI_HOSTNAME: floci               # URLs Floci returns (SQS QueueUrl) must resolve from other containers
+    # No Docker socket (handoff A1, Task 0 smoke test): Floci serves CreateFleet and DescribeInstances without
+    # launching containers, so it gets no access to the host's Docker daemon. scripts/check-no-sock.sh enforces this.
+    # No published port: only the gateway (and the seeding helper on this network) can reach Floci.
+    expose: ["4566"]
+
+  aws-gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args:
+        CMD: aws-gateway
+        GOLANG_IMAGE: ${GOLANG_IMAGE}
+        STATIC_IMAGE: ${STATIC_IMAGE}
+    networks: [meridian]
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?run make init}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?run make init}
+    command:
+      - -listen=0.0.0.0:4566
+      - -allow-any-interface          # needed inside a container; the published port below stays on loopback
+      - -ops=/ops.yaml
+      - -trace
+      - -trace-out=/trace
+      # Every backend name ops.yaml can use is declared here. Backends that are not running are never
+      # dialed; only the profiles named by `scripts/profiles.py ops.yaml` are started.
+      - -backend=floci=http://floci:4566
+      - -backend=ec2-sim=http://ec2-sim:4570
+      - -backend=pricing-facade=http://pricing-facade:4571
+      - -backend=eks-facade=http://eks-facade:4572
+      - -backend=moto=http://moto:5000
+      # Operations Karpenter calls that ops.yaml does not list yet are forwarded to Floci and recorded.
+      - -trace-route=ec2=floci
+      - -trace-route=iam=floci
+      - -trace-route=sts=floci
+      - -trace-route=sqs=floci
+      - -trace-route=ssm=floci
+      - -trace-route=pricing=floci
+      - -trace-route=eks=floci
+    ports:
+      - "127.0.0.1:4566:4566"         # host loopback only (spec: Security)
+    volumes:
+      - ../trace/raw:/trace           # the recorded call list lands here
+    # Runs as the invoking user (not root) so it can write the bind-mounted trace directory; make exports these.
+    user: "${MERIDIAN_UID:?use make}:${MERIDIAN_GID:?use make}"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on: [floci]
+
+  # ---- Fallback backends: each starts only if S0 moved operations to it (profile name = backend name) ----
+  ec2-sim:
+    profiles: [ec2-sim]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: {CMD: ec2-sim, GOLANG_IMAGE: "${GOLANG_IMAGE}", STATIC_IMAGE: "${STATIC_IMAGE}"}
+    networks: [meridian]
+    command: ["-listen=0.0.0.0:4570", "-allow-any-interface"]
+    expose: ["4570"]            # internal only: the simulator trusts the gateway, so it is never published
+
+  pricing-facade:
+    profiles: [pricing-facade]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: {CMD: pricing-facade, GOLANG_IMAGE: "${GOLANG_IMAGE}", STATIC_IMAGE: "${STATIC_IMAGE}"}
+    networks: [meridian]
+    command: ["-listen=0.0.0.0:4571", "-allow-any-interface"]
+    expose: ["4571"]
+
+  eks-facade:
+    profiles: [eks-facade]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: {CMD: eks-facade, GOLANG_IMAGE: "${GOLANG_IMAGE}", STATIC_IMAGE: "${STATIC_IMAGE}"}
+    networks: [meridian]
+    command: ["-listen=0.0.0.0:4572", "-allow-any-interface", "-cluster-name=meridian-g0"]
+    environment:
+      K3S_VERSION: ${K3S_VERSION:-}     # the reported EKS version is derived from the pinned k3s
+    expose: ["4572"]
+
+  moto:
+    profiles: [moto]
+    image: ${MOTO_IMAGE:-moto-not-pinned}   # only started via the moto profile, once versions.yaml pins moto (Task 14)
+    networks: [meridian]
+    expose: ["5000"]

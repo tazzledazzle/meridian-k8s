@@ -1,0 +1,18 @@
+# One Dockerfile for every Go service: docker build --build-arg CMD=aws-gateway ...
+ARG GOLANG_IMAGE
+ARG STATIC_IMAGE
+FROM ${GOLANG_IMAGE} AS build
+ARG CMD
+WORKDIR /src
+COPY go.mod go.sum* ./
+RUN go mod download
+COPY . .
+# CGO off so the binary runs in the static (distroless) image.
+RUN CGO_ENABLED=0 go build -trimpath -o /out/service ./cmd/${CMD}
+
+FROM ${STATIC_IMAGE}
+COPY --from=build /out/service /service
+# ops.yaml is read at startup (the gateway's -ops flag).
+COPY ops.yaml /ops.yaml
+USER 65532:65532
+ENTRYPOINT ["/service"]

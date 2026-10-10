@@ -1,0 +1,11 @@
+# Keep secrets and bulky local state out of the build context (the builder stage runs COPY . .).
+.env
+.env.images
+.env.images.tmp
+.git
+.claude
+.beads
+.internal
+bin
+trace
+*.md
