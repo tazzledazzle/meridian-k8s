@@ -1,7 +1,9 @@
 # S0 decision: which operations stay on Floci
 
-Status: **PROPOSED, awaiting user approval** (handoff section 5 rule 3, end of Task 8). `ops.yaml` is NOT yet changed:
-routing two operations to backends that are not built would break the running stack.
+Status: **APPROVED by the user on 2026-10-10** (handoff section 5 rule 3), with pricing decided as `pricing-facade` (region stays `us-west-2`).
+The approval was conditional on Karpenter criterion 3, which has now **passed** (see `docs/s0/criterion3.md`), so it is unconditional.
+`ops.yaml` is intentionally NOT yet changed: routing two operations to backends that are not built would break the running stack.
+It is applied (`s0matrix.py --apply`) once the reference `ec2-sim` and `pricing-facade` exist.
 Date: 2026-10-10. Floci pinned at `floci/floci:2.2.0@sha256:e97cd0c1dc2aa14e7697fb5ef5018404c4d6345169dbd276315f0bed2c7b0520`
 (A7: this result is valid only for this version). Not validated against real AWS.
 
@@ -72,11 +74,15 @@ Alternative for pricing, user's choice: run the whole stack in `us-east-1`, wher
 |---|---|---|
 | 1. Karpenter starts, stays up, discovers its world | **Pass** (one known error) | `1/1 Running`; discovered cluster endpoint, instance types, offerings, zones, kube DNS, Kubernetes version; `EC2NodeClass` `Ready=True` with `AMIsReady`, `SubnetsReady`, `SecurityGroupsReady`, `InstanceProfileReady` (instance-profile lifecycle ran through Floci IAM). The only error is `updating pricing: no on-demand pricing found` (the pricing failure above). |
 | 2. Pending pod becomes a NodeClaim and an instance | **Pass** | Same second: `found provisionable pod(s)`, `created nodeclaim`, `launched nodeclaim` (`m5.large`, `aws:///us-west-2a/i-0a37af3f0ff865ffc`, AMI `ami-0abcdef1234567891`); instance present in Floci. |
-| 3. Node registers as a KWOK-backed Node and the pod schedules | **NOT RUN** | Needs `node-registrar` (Task 10) and KWOK (Task 15), which do not exist yet. The NodeClaim stays `Ready=Unknown`. |
+| 3. Node registers as a KWOK-backed Node and the pod schedules | **Pass** (2026-10-10) | `node-registrar` created the Node 1 s after deploy for the waiting NodeClaim; Karpenter logged `registered` and `initialized`; NodeClaim `Launched/Registered/Initialized/Ready` all True; Node Ready via KWOK; `inflate` pod Running on it. Fresh cycle: Pending to Running in about 3 s. Scale to 0: Karpenter disrupted the empty node, terminated the instance through Floci (`TerminateInstances`), deleted the NodeClaim; the registrar removed the Node. Only Karpenter error in 25 min: the known pricing one. Details: `docs/s0/criterion3.md`. |
 
-Karpenter did not move any operation the probe passed: nothing it called failed except pricing. Criterion 3 is still open,
-so **approval is of the table, conditional on criterion 3**: after Task 10 and Task 15's KWOK, if Karpenter fails on an
-operation Floci serves, that operation moves to the next backend by editing one `backend` line (ADR-0002).
+Karpenter did not move any operation the probe passed: nothing it called failed except pricing. All three criteria now pass with
+every operation still on Floci, so the table stands. If a later task finds Karpenter failing on an operation Floci serves, that
+operation moves to the next backend by editing one `backend` line (ADR-0002).
+
+New constraint from criterion 3: Floci's `DescribeInstanceTypes` offers types the catalog does not have (for example
+`m6gd.large`), and `node-registrar` makes no Node for them. The NodePool is pinned to catalog types, and the reference `ec2-sim`
+must serve exactly the catalog.
 
 ## Observations that may affect criteria 3 and 4 (not failures)
 
@@ -100,8 +106,8 @@ operation Floci serves, that operation moves to the next backend by editing one 
 | k3d tools | 7 MiB |
 | **Total** | **about 660 MiB** (no KWOK, workloads or fallbacks yet) |
 
-## What the user is asked to decide
+## Decisions (answered 2026-10-10)
 
-1. Approve the table above (34 on Floci, `DescribeInstanceTypes` on a thin reference service, `pricing:GetProducts` on `pricing-facade`)?
-2. Pricing: `pricing-facade` (keeps `us-west-2`) or switch the stack to `us-east-1`?
-3. Next: build Task 10 (`node-registrar`) and a KWOK setup so criterion 3 can be run before the table is final, or continue and run it inside Task 15/16?
+1. APPROVED. Table above (34 on Floci, `DescribeInstanceTypes` on a thin reference service, `pricing:GetProducts` on `pricing-facade`)?
+2. Pricing: `pricing-facade`, keeping `us-west-2`.
+3. Build Task 10 (`node-registrar`) and KWOK first so criterion 3 runs before the table is final. Done.
