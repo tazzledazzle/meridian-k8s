@@ -1,4 +1,4 @@
-.PHONY: init test lint-versions env-images build build-linux s0-up s0-down seed trace-show check-sock
+.PHONY: init test test-scripts lint-versions env-images build build-linux s0-up s0-down seed trace-show check-sock s0-probe s0-probe-moto s0-decide
 
 # Generates local credentials; safe to run repeatedly.
 init:
@@ -6,6 +6,10 @@ init:
 
 test:
 	go test ./...
+
+# Python tests for the tooling scripts (profiles.py, s0matrix.py, s0-run.sh); -W error turns warnings into failures.
+test-scripts:
+	cd scripts && python3 -W error -m unittest discover -p 'test_*.py'
 
 # Fails if versions.yaml has any unpinned entry.
 lint-versions:
@@ -53,3 +57,16 @@ seed: build-linux
 
 trace-show:
 	./scripts/trace-show.sh
+
+# Runs the contract probe against the running S0 stack and writes docs/s0/report.{md,json}.
+s0-probe: build-linux
+	./scripts/s0-run.sh docs/s0 report
+
+# Same probe against a stack whose coupled EC2 operations are routed to Moto (ops.yaml backend: moto); writes report-moto.{md,json}.
+s0-probe-moto: build-linux
+	S0_LABEL=moto ./scripts/s0-run.sh docs/s0 report-moto
+
+# Prints the per-operation decision from the latest reports (add APPLY=1 to rewrite ops.yaml).
+# The Moto report is used only when it exists. Order of trial for the coupled EC2 group: floci, moto, ec2-sim.
+s0-decide:
+	python3 scripts/s0matrix.py --report floci=docs/s0/report.json $(if $(wildcard docs/s0/report-moto.json),--report moto=docs/s0/report-moto.json,) ops.yaml $(if $(APPLY),--apply,)

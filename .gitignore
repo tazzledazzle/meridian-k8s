@@ -11,3 +11,7 @@ trace/gate/
 .beads-credential-key
 .beads/proxieddb/
 .env.images.tmp
+
+# Python bytecode
+__pycache__/
+*.pyc

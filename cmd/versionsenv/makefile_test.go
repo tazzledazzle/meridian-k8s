@@ -69,7 +69,7 @@ func TestAdvMakeEnvImagesFailureKeepsPreviousFile(t *testing.T) {
 	}
 }
 
-func TestAdvMakeBuildProducesThreeBinaries(t *testing.T) {
+func TestAdvMakeBuildProducesEveryBinary(t *testing.T) {
 	if _, err := exec.LookPath("make"); err != nil {
 		t.Skip("no make")
 	}
@@ -79,18 +79,18 @@ func TestAdvMakeBuildProducesThreeBinaries(t *testing.T) {
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("make build: %v\n%s", err, out)
 	}
-	for _, n := range []string{"aws-gateway", "awscall", "versionsenv"} {
+	for _, n := range []string{"aws-gateway", "awscall", "s0probe", "versionsenv"} {
 		st, err := os.Stat(filepath.Join(d, "bin", n))
 		if err != nil || st.Mode()&0o111 == 0 {
 			t.Errorf("bin/%s: %v", n, err)
 		}
 	}
 	ents, _ := os.ReadDir(filepath.Join(d, "bin"))
-	if len(ents) != 3 {
+	if len(ents) != 4 { // every cmd/ directory builds one binary; s0probe joined in Task 8
 		var names []string
 		for _, e := range ents {
 			names = append(names, e.Name())
 		}
-		t.Errorf("bin has %v, want exactly the three binaries", names)
+		t.Errorf("bin has %v, want exactly the four binaries", names)
 	}
 }
