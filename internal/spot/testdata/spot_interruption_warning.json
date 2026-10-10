@@ -1,0 +1,15 @@
+{
+  "_comment": "GOLDEN SAMPLE. Source: aws/karpenter-provider-aws tag v1.14.1, pkg/controllers/interruption/suite_test.go func spotInterruptionMessage (the fixture Karpenter's own tests serialise to JSON and feed through its parser), structs in pkg/controllers/interruption/messages/types.go (Metadata) and messages/spotinterruption/model.go (Message, Detail). Field names and literals (version \"0\", source \"aws.ec2\", detail-type \"EC2 Spot Instance Interruption Warning\", resources arn:aws:ec2:<region>:instance/<id>, detail.instance-action \"terminate\") are Karpenter's; id, time, account and instance id are sample values (the fixture generates a UUID and time.Now()). The shape also matches the EventBridge example in the AWS EC2 user guide (spot-instance-termination-notices). The test strips this _comment key before comparing.",
+  "version": "0",
+  "id": "12345678-1234-1234-1234-123456789012",
+  "detail-type": "EC2 Spot Instance Interruption Warning",
+  "source": "aws.ec2",
+  "account": "000000000000",
+  "time": "2026-10-09T12:00:00Z",
+  "region": "us-west-2",
+  "resources": ["arn:aws:ec2:us-west-2:instance/i-0123456789abcdef0"],
+  "detail": {
+    "instance-id": "i-0123456789abcdef0",
+    "instance-action": "terminate"
+  }
+}
