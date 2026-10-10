@@ -52,7 +52,7 @@ COUPLED = [
 
 # One operation line of ops.yaml: group 1 is everything up to the backend name, group 2/3 service and name,
 # group 4 the backend, group 5 the rest of the line (a comma or the closing brace, then any trailing comment).
-OP_LINE = re.compile(r"^(\s*- \{service: (\w+), name: (\w+),.*?backend: )([a-z][a-z0-9-]*)([,}].*)$")
+OP_LINE = re.compile(r"^(\s*- \{service: (\w+), name: (\w+),(?:.*?[\s,])?backend: )([a-z][a-z0-9-]*)([,}].*)$")
 BACKEND_NAME = re.compile(r"^[a-z][a-z0-9-]*$")
 
 
@@ -150,6 +150,7 @@ def read_ops(path):
 
 def apply(path, decision):
     """Rewrites only the backend name of each operation line, then replaces the file atomically (and only if it changed)."""
+    path = os.path.realpath(path)  # write through a symlink: replace the target, keep the link
     with open(path, newline="") as f:
         text = f.read()
     lines = text.split("\n")
@@ -198,7 +199,7 @@ def load_report(path):
     try:
         with open(path) as f:
             report = json.load(f)
-    except (OSError, json.JSONDecodeError) as e:
+    except (OSError, ValueError, RecursionError) as e:  # JSONDecodeError is a ValueError; a deeply nested file is a RecursionError
         raise ValueError(f"cannot read report {path}: {e}")
     if not isinstance(report, dict) or not isinstance(report.get("results"), list):
         raise ValueError(f"{path}: not a probe report (no results list)")
@@ -246,7 +247,7 @@ def main(argv):
         if args.apply:
             changed = apply(ops_path, decision)
             print(f"\n{ops_path}: {'backend fields rewritten' if changed else 'already up to date'}")
-    except (ValueError, OSError) as e:
+    except (ValueError, OSError, RecursionError) as e:
         return fail(str(e))
     return 0
 

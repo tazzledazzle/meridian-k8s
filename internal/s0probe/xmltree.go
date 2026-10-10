@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 )
@@ -20,11 +21,36 @@ type Node struct {
 	Kids  []*Node
 }
 
+// charsetReader supports the declared encodings an AWS-compatible backend may legally send: UTF-8, US-ASCII (both
+// pass through; the decoder rejects invalid UTF-8 itself) and ISO-8859-1/latin1 (every byte is the same code point).
+// Anything else is refused with a clear error rather than guessed at. No third-party dependency.
+func charsetReader(label string, in io.Reader) (io.Reader, error) {
+	switch strings.ToLower(strings.TrimSpace(label)) {
+	case "utf-8", "utf8", "us-ascii", "ascii":
+		return in, nil
+	case "iso-8859-1", "iso8859-1", "latin1", "latin-1":
+		b, err := io.ReadAll(in)
+		if err != nil {
+			return nil, err
+		}
+		rs := make([]rune, len(b))
+		for i, c := range b {
+			rs[i] = rune(c)
+		}
+		return strings.NewReader(string(rs)), nil
+	}
+	return nil, fmt.Errorf("unsupported XML encoding %q (supported: UTF-8, US-ASCII, ISO-8859-1)", label)
+}
+
 // ParseXML parses a response body into a tree rooted at the document element.
 func ParseXML(b []byte) (*Node, error) {
 	dec := xml.NewDecoder(bytes.NewReader(b))
+	dec.CharsetReader = charsetReader
 	root := &Node{}
 	stack := []*Node{root}
+	// Character data is collected in one builder per open element: appending to a string for every token (comments
+	// split text into many tokens) would copy the text so far each time, which is quadratic.
+	chars := []*strings.Builder{{}}
 	for {
 		tok, err := dec.Token()
 		if err == io.EOF {
@@ -42,12 +68,15 @@ func ParseXML(b []byte) (*Node, error) {
 			top := stack[len(stack)-1]
 			top.Kids = append(top.Kids, n)
 			stack = append(stack, n)
+			chars = append(chars, &strings.Builder{})
 		case xml.EndElement:
 			if len(stack) > 1 { // the decoder already rejects unbalanced tags; this keeps the root safe regardless
+				stack[len(stack)-1].Chars = chars[len(chars)-1].String()
 				stack = stack[:len(stack)-1]
+				chars = chars[:len(chars)-1]
 			}
 		case xml.CharData:
-			stack[len(stack)-1].Chars += string(t)
+			chars[len(chars)-1].Write(t)
 		}
 	}
 	if len(stack) != 1 {

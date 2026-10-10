@@ -12,8 +12,8 @@ cd "$(dirname "$0")/.."
 
 OUT="${1-docs/s0}"
 NAME="${2-report}"
-# OUT and NAME end up inside a docker -v argument, so allow plain relative paths only (no ':' ',' '..' or absolute paths).
-[[ "$OUT" =~ ^[A-Za-z0-9._/-]+$ && "$OUT" != /* && "$OUT" != *..* ]] || { echo "s0-run: unsafe output directory '$OUT'" >&2; exit 2; }
+# OUT and NAME end up inside a docker -v argument, so allow plain relative paths only (no ':' ',' '..', leading '-' or absolute paths).
+[[ "$OUT" =~ ^[A-Za-z0-9._/-]+$ && "$OUT" != /* && "$OUT" != -* && "$OUT" != *..* ]] || { echo "s0-run: unsafe output directory '$OUT'" >&2; exit 2; }
 [[ "$NAME" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ && "$NAME" != *..* ]] || { echo "s0-run: unsafe report name '$NAME'" >&2; exit 2; }
 
 [ -f .env ] || { echo "s0-run: .env is missing; run 'make init'" >&2; exit 2; }
@@ -30,10 +30,16 @@ mkdir -p "$OUT"
 for ext in md json; do
   [ -e "$OUT/$NAME.$ext" ] && mv "$OUT/$NAME.$ext" "$OUT/.$NAME.$ext.prev"
 done
+# The pair is all or nothing: md and json from different runs must never sit side by side. Keep the new files only
+# when this run wrote both; otherwise drop any partial output and put both old files back.
 cleanup() {
+  if [ -s "$OUT/$NAME.md" ] && [ -s "$OUT/$NAME.json" ]; then
+    rm -f "$OUT/.$NAME.md.prev" "$OUT/.$NAME.json.prev"
+    return
+  fi
   for ext in md json; do
     if [ -e "$OUT/.$NAME.$ext.prev" ]; then
-      if [ -e "$OUT/$NAME.$ext" ]; then rm -f "$OUT/.$NAME.$ext.prev"; else mv "$OUT/.$NAME.$ext.prev" "$OUT/$NAME.$ext"; fi
+      mv -f "$OUT/.$NAME.$ext.prev" "$OUT/$NAME.$ext"
     fi
   done
 }
@@ -57,11 +63,18 @@ docker run --rm --network "$NET" --user "$(id -u):$(id -g)" \
 rc=$?
 set -e
 
+# Whatever the exit status, a run that wrote no complete new pair did not produce a report.
+if [ "$rc" -le 1 ] && { [ ! -s "$OUT/$NAME.md" ] || [ ! -s "$OUT/$NAME.json" ]; }; then
+  echo "s0-run: the probe exited $rc but wrote no new report pair ($OUT/$NAME.md and $OUT/$NAME.json)" >&2
+  # Remove the partial new file so cleanup restores the old pair as a whole.
+  rm -f "$OUT/$NAME.md" "$OUT/$NAME.json"
+  exit 1
+fi
+
 case "$rc" in
   0) echo "probe passed; report in $OUT/$NAME.md" ;;
   1)
     # Exit 1 means checks failed (expected during S0); anything else, or no report, is a real problem.
-    [ -s "$OUT/$NAME.json" ] || { echo "s0-run: the probe exited 1 but wrote no new report to $OUT/$NAME.json" >&2; exit 1; }
     echo "probe reported failures (expected during S0); see $OUT/$NAME.md" ;;
   *) echo "s0-run: the probe could not run (exit $rc)" >&2; exit "$rc" ;;
 esac

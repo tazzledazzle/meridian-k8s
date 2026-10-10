@@ -18,7 +18,7 @@ echo called >> "$STUB_DIR/calls.log"
 env | grep -c '^AWS_SECRET_ACCESS_KEY=' > "$STUB_DIR/secret_in_env.log" || true
 if [ "${STUB_WRITE:-0}" = 1 ]; then
   while [ $# -gt 0 ]; do
-    if [ "$1" = -v ]; then case "$2" in *:/out) host="${2%:/out}"; echo '{}' > "$host/${STUB_NAME:-report}.json";; esac; fi
+    if [ "$1" = -v ]; then case "$2" in *:/out) host="${2%:/out}"; echo '{}' > "$host/${STUB_NAME:-report}.json"; echo md > "$host/${STUB_NAME:-report}.md";; esac; fi
     shift
   done
 fi
