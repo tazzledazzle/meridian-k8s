@@ -1,0 +1,46 @@
+# Supported AWS operations: the single source of truth for the gateway, the probe and the conformance report.
+# backend names the -backend flag that serves the operation. Before S0 every operation points at floci;
+# docs/s0/decision.md records which ones move to a custom backend and why.
+ops:
+  # --- ec2 ---
+  - {service: ec2, name: CreateFleet, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: RunInstances, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: TerminateInstances, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeInstances, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeInstanceTypes, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeInstanceTypeOfferings, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeAvailabilityZones, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeSubnets, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeSecurityGroups, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeImages, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeLaunchTemplates, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: CreateLaunchTemplate, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DeleteLaunchTemplate, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: CreateTags, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeSpotPriceHistory, protocol: query, backend: floci, fidelity: behavior-inferred}
+  # --- pricing ---
+  - {service: pricing, name: GetProducts, protocol: json, backend: floci, fidelity: behavior-inferred}
+  # --- eks ---
+  - {service: eks, name: DescribeCluster, protocol: restjson, backend: floci, fidelity: behavior-inferred}
+  - {service: eks, name: CreateCluster, protocol: restjson, backend: floci, fidelity: behavior-inferred}
+  # --- iam ---
+  - {service: iam, name: GetInstanceProfile, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: iam, name: CreateInstanceProfile, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: iam, name: DeleteInstanceProfile, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: iam, name: AddRoleToInstanceProfile, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: iam, name: RemoveRoleFromInstanceProfile, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: iam, name: TagInstanceProfile, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: iam, name: ListInstanceProfiles, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: iam, name: CreateRole, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: iam, name: GetRole, protocol: query, backend: floci, fidelity: behavior-inferred}
+  # --- sqs ---
+  - {service: sqs, name: GetQueueUrl, protocol: json, backend: floci, fidelity: behavior-inferred}
+  - {service: sqs, name: ReceiveMessage, protocol: json, backend: floci, fidelity: behavior-inferred}
+  - {service: sqs, name: DeleteMessage, protocol: json, backend: floci, fidelity: behavior-inferred}
+  - {service: sqs, name: CreateQueue, protocol: json, backend: floci, fidelity: behavior-inferred}
+  - {service: sqs, name: SendMessage, protocol: json, backend: floci, fidelity: behavior-inferred}
+  # --- ssm ---
+  - {service: ssm, name: GetParameter, protocol: json, backend: floci, fidelity: behavior-inferred}
+  - {service: ssm, name: PutParameter, protocol: json, backend: floci, fidelity: behavior-inferred}
+  # --- sts ---
+  - {service: sts, name: GetCallerIdentity, protocol: query, backend: floci, fidelity: behavior-inferred}
