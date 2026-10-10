@@ -1,4 +1,4 @@
-# Meridian
+# Meridian Kubernetes
 
 Meridian is a simulated AWS plane that lets unmodified Karpenter provision nodes on a laptop, so platform teams can test autoscaling without an AWS account or a cloud bill.
 
@@ -10,8 +10,8 @@ Gate G0, the Karpenter proof gate, is **in progress**. The gate does not pass ye
 
 - Real, unmodified Karpenter 1.14.1 runs on a local k3d cluster against the simulated plane.
 - By hand on the live stack, Karpenter launched an instance through `CreateFleet`, received a KWOK-backed Node, scheduled a pod on it, and tore it down. That covers criteria 1-3 of 8. The record is in [docs/s0/criterion3.md](docs/s0/criterion3.md).
-- A contract probe checked Floci 2.2.0 against the 36 operations in [ops.yaml](ops.yaml): 35 of 37 checks passed. Floci serves 34 operations. Two need small custom backends ([docs/s0/decision.md](docs/s0/decision.md)).
-- The stack used about 840 MiB with one node. Peak memory is not measured yet.
+- A contract probe checked Floci 2.2.0 against the 36 operations in [ops.yaml](ops.yaml): 35 of 37 checks passed. Floci serves 34 operations. A reference `ec2-sim` and a `pricing-facade` serve the other two ([docs/s0/decision.md](docs/s0/decision.md)). Against the routed plane, the probe passes 37 of 37 checks ([docs/s0/report-routed.md](docs/s0/report-routed.md)).
+- The stack used about 850 MiB with one node. Peak memory is not measured yet.
 
 ## Why this exists
 
@@ -29,9 +29,9 @@ Meridian puts a SigV4-verifying gateway in front of one or more backends and rou
 | Floci 2.2.0 backend for 34 of 36 operations | Done |
 | `node-registrar` and vendored KWOK (instances become Nodes) | Done, tested |
 | Karpenter 1.14.1 on k3d, criteria 1-3 of 8 | Done by hand on the live stack |
-| Reference-data `ec2-sim` (`DescribeInstanceTypes`) | In progress |
-| `pricing-facade` (`pricing:GetProducts`) | In progress |
-| Applying the approved routing table to `ops.yaml` | Planned (needs the two services above) |
+| Reference-data `ec2-sim` (`DescribeInstanceTypes`) | Done, tested |
+| `pricing-facade` (`pricing:GetProducts`) | Done, tested |
+| Approved routing table applied to `ops.yaml` | Done |
 | Spot interruption (`simctl`) | Planned |
 | Isolated, no-internet gate stack | Planned |
 | `make gate-karpenter` and the eight-criteria gate test | Planned |
@@ -48,8 +48,8 @@ flowchart LR
   end
   K -- "SigV4 requests" --> G["aws-gateway<br/>verifies SigV4, routes by ops.yaml"]
   G --> F["Floci 2.2.0<br/>34 of 36 operations"]
-  G -. planned .-> E["ec2-sim<br/>DescribeInstanceTypes"]
-  G -. planned .-> P["pricing-facade<br/>GetProducts"]
+  G --> E["ec2-sim<br/>DescribeInstanceTypes"]
+  G --> P["pricing-facade<br/>GetProducts"]
   R -- "polls running instances" --> G
   R -- "creates Nodes; KWOK keeps them Ready" --> W
 ```
@@ -58,13 +58,13 @@ flowchart LR
 2. The gateway rejects calls with a bad signature, then looks up the operation in [ops.yaml](ops.yaml) and proxies it to the named backend.
 3. Floci answers EC2, IAM, SQS, SSM, EKS, and STS calls in metadata-only mode. It launches no containers.
 4. `node-registrar` watches for running instances and registers a Node for each one. KWOK marks those Nodes Ready, so pods schedule.
-5. Today `ops.yaml` still routes every operation to Floci. The two failing operations move after their backends exist.
+5. `ops.yaml` routes 34 operations to Floci, `DescribeInstanceTypes` to `ec2-sim` and `pricing:GetProducts` to `pricing-facade`.
 
 ## Quick start
 
 Prerequisites: Go 1.24, Docker, `k3d` v5.9.0 on `PATH`, `helm`, `openssl`, `python3`. Pinned component versions are in [versions.yaml](versions.yaml).
 
-Stack resources: about 840 MiB with one node on an Apple-silicon Docker VM (7.65 GiB). Peak memory is not measured.
+Stack resources: about 850 MiB with one node on an Apple-silicon Docker VM (7.65 GiB). Peak memory is not measured.
 
 ```sh
 make init            # generate random local credentials into .env (no default keys)
@@ -92,6 +92,7 @@ make s0-down         # needs Docker: delete the cluster and the stack
 | `cmd/s0probe`, `internal/s0probe`, `scripts/s0matrix.py` | Contract probe and backend decision |
 | `cmd/node-registrar`, `internal/noderegistrar` | Instances to KWOK-backed Nodes |
 | `internal/trace`, `cmd/awscall`, `internal/awscall` | Call recording and a small AWS client |
+| `cmd/ec2-sim`, `internal/ec2sim`, `cmd/pricing-facade`, `internal/pricingfacade` | The two small backends for the operations Floci cannot serve |
 | `internal/catalog` | Region data: AZs, instance types, ENI limits, prices |
 | `deploy/` | Compose file, Karpenter values, vendored KWOK, workloads |
 | `scripts/` | Cluster, seeding, and test-harness scripts |
@@ -107,7 +108,7 @@ make s0-down         # needs Docker: delete the cluster and the stack
 
 ## Testing
 
-Every package except `cmd/node-registrar` has unit tests. The gateway, SigV4, `awscall`, probe, trace, and versions packages also have adversarial tests. Seven packages have Go fuzz targets: `internal/awsapi`, `internal/awscall`, `internal/gateway`, `internal/s0probe`, `internal/trace`, `internal/versions` and `cmd/awscall`.
+Every package except `cmd/node-registrar` has unit tests. The gateway, SigV4, `awscall`, probe, trace, and versions packages also have adversarial tests. Nine packages have Go fuzz targets: `internal/awsapi`, `internal/awscall`, `internal/gateway`, `internal/s0probe`, `internal/trace`, `internal/versions`, `internal/ec2sim`, `internal/pricingfacade` and `cmd/awscall`.
 
 ```sh
 make test            # go test ./...

@@ -8,8 +8,8 @@ Meridian has four parts: a gateway, one or more AWS backends, a node controller,
 |---|---|---|
 | Karpenter 1.14.1 | Helm chart, `deploy/karpenter-values.yaml` | The system under test. `AWS_ENDPOINT_URL` points every SDK call at the gateway. |
 | `aws-gateway` | `cmd/aws-gateway`, `internal/gateway` | Verifies SigV4, identifies the operation, routes it to a backend. |
-| Floci 2.2.0 | pinned image | Default backend for all 36 operations in `ops.yaml`. |
-| `ec2-sim`, `pricing-facade` | not yet in the repository | Backends for the two operations Floci fails. See [[The S0 Spike]] and [[Roadmap and Status]]. |
+| Floci 2.2.0 | pinned image | Backend for 34 of the 36 operations in `ops.yaml`. |
+| `ec2-sim`, `pricing-facade` | `cmd/ec2-sim`, `internal/ec2sim`, `cmd/pricing-facade`, `internal/pricingfacade` | Backends for the two operations Floci fails: `DescribeInstanceTypes` and `pricing:GetProducts`. See [[The S0 Spike]]. |
 | `node-registrar` | `cmd/node-registrar` | Creates a Node for each running instance and deletes it on termination. |
 | KWOK 0.8.0 | `deploy/kwok` | Keeps those Nodes Ready and marks their pods Running. |
 | k3d cluster `meridian-g0` | `scripts/k3d-up.sh` | Hosts Karpenter, KWOK and the registrar (k3s v1.35.9). |
@@ -20,8 +20,8 @@ Meridian has four parts: a gateway, one or more AWS backends, a node controller,
 flowchart LR
     K[Karpenter] -->|SigV4 request| G[aws-gateway]
     G -->|ops.yaml lookup| F[Floci]
-    G -.->|not yet used| S[ec2-sim]
-    G -.->|not yet used| P[pricing-facade]
+    G -->|DescribeInstanceTypes| S[ec2-sim]
+    G -->|GetProducts| P[pricing-facade]
     G -->|trace and record| T[(trace/raw)]
     R[node-registrar] -->|ec2 calls via gateway| G
     R -->|create and delete Nodes| A[Kubernetes API]
@@ -29,7 +29,7 @@ flowchart LR
     K -->|NodeClaims, Nodes| A
 ```
 
-Dotted lines show backends that the Compose file declares but `ops.yaml` does not yet use.
+Each backend arrow is a route in `ops.yaml`. Compose starts `ec2-sim` and `pricing-facade` only when `ops.yaml` routes an operation to them.
 
 ## One launch, step by step
 

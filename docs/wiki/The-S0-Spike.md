@@ -50,3 +50,13 @@ The user approved the table conditionally on criterion 3. The pass made the appr
 - `ops.yaml` stays unchanged until `ec2-sim` and `pricing-facade` exist. Routing to missing backends would break the running stack.
 
 The result holds only for Floci 2.2.0 at the pinned digest (assumption A7 in [[Decisions]]).
+
+## What the live run taught about pricing
+
+The first `pricing-facade` returned an empty price list to Karpenter even though its own tests passed. Two facts from Karpenter 1.14.1's source explain why.
+
+1. **Filter field names are case-insensitive.** Karpenter filters on the field `serviceCode`. The stored attribute is `servicecode`. An exact-case match returns nothing, so the facade now lower-cases field names. Values stay case-sensitive.
+2. **Karpenter needs a bare-metal price too.** `UpdateOnDemandPricing` runs one standard query and one bare-metal query. It logs `no on-demand pricing found` when either result is empty. The catalog has no bare-metal type, so the facade serves one bare-metal product (`m5.metal`) that only the bare-metal query matches.
+
+Both tests had missed the problem because they built Karpenter's filter set from a description, not from the source. The suite now holds Karpenter's exact filter set. A packet capture of the real request confirmed the shape. After the fixes, Karpenter ran for more than 20 minutes with no AWS error.
+

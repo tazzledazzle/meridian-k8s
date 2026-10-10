@@ -5,8 +5,7 @@ This page records where the project stands. Update the Status block here and in 
 <!-- STATUS-BLOCK:START (update here and in Home only) -->
 ## Status
 
-- Done: spike S0 (35 of 37 probe checks pass), gateway, node-registrar, KWOK, criteria 1 to 3 by hand.
-- Being built now: a reference `ec2-sim` (serves `DescribeInstanceTypes` from `internal/catalog`) and a `pricing-facade`. Until they exist, `ops.yaml` still routes every operation to Floci.
+- Done: spike S0, gateway, node-registrar, KWOK, the reference `ec2-sim` and the `pricing-facade`, criteria 1 to 3 by hand. The approved table is applied: 34 operations run on Floci, `DescribeInstanceTypes` on `ec2-sim`, `pricing:GetProducts` on `pricing-facade`. The probe passes 37 of 37 checks against this routed plane (it passed 35 of 37 against Floci alone), and Karpenter logs no AWS errors.
 - Does not exist yet: `simctl` (spot interruption injector), the isolated no-internet gate stack, `make gate-karpenter` with its eight criteria, the gate test, CI, ADRs.
 <!-- STATUS-BLOCK:END -->
 
@@ -19,12 +18,11 @@ Not validated against real AWS.
 - Contract probe, decision script and the approved table ([[The S0 Spike]]).
 - Local stack: Floci behind the gateway, k3d, Karpenter 1.14.1 ([[Running It]]).
 - `node-registrar`, `internal/catalog` and vendored KWOK; criterion 3 passes ([[Nodes Without Machines]]).
+- Reference `ec2-sim` (`DescribeInstanceTypes` from `internal/catalog`) and `pricing-facade` (`pricing:GetProducts`), with the approved table applied to `ops.yaml` ([[The S0 Spike]]).
 
 ## In progress
 
-- Reference `ec2-sim`, limited to `DescribeInstanceTypes` served from `internal/catalog`. It must serve exactly the catalog types.
-- `pricing-facade`, to remove the `no on-demand pricing found` error.
-- After both exist, apply the approved table to `ops.yaml` with `make s0-decide APPLY=1`.
+Nothing. `simctl` is next.
 
 ## Planned
 
@@ -42,7 +40,7 @@ None of these exists in the repository today.
 
 - Should trace mode forward unknown services to Floci, so the trace shows the full call surface? The trade-off is wider discovery against a weaker allow-list. Unanswered.
 - Does Karpenter label spot instances on-demand because `DescribeInstances` omits `instanceLifecycle=spot`? Not tested.
-- Will the real peak memory fit the target host? Only idle and one-pod figures exist (about 840 MiB).
+- Will the real peak memory fit the target host? Only idle and one-pod figures exist (about 850 MiB).
 - Do k3d and Floci run on an internal Docker network? Unverified.
 - Do results survive a Floci version bump? They hold only for 2.2.0 at the pinned digest.
 

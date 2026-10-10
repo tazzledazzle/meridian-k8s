@@ -312,8 +312,21 @@ class PropertyTests(unittest.TestCase):
 # ---------------------------------------------------------------------------------------------------------
 class RealOpsYamlTests(TempOps):
     def copy_real(self):
-        shutil.copy(REAL_OPS, self.path())
+        """The real ops.yaml with every backend reset to floci: these tests start from the pre-decision state,
+        so they hold both before and after the approved table is applied."""
+        text = open(REAL_OPS).read()
+        with open(self.path(), "w") as f:
+            f.write(re.sub(r"(backend:\s*)[a-z][a-z0-9-]*", r"\1floci", text))
         return self.path()
+
+    def test_real_file_is_the_approved_table(self):
+        """The committed ops.yaml equals the decision computed from the committed Floci probe report."""
+        p = os.path.join(self.tmp, "ops.yaml") if hasattr(self, "tmp") else self.path()
+        shutil.copy(REAL_OPS, p)
+        before = open(p, "rb").read()
+        code, out, err = self.cli(os.path.join(os.path.dirname(REAL_OPS), "docs", "s0", "report.json"), p, "--apply")
+        self.assertEqual((code, err), (0, ""))
+        self.assertEqual(open(p, "rb").read(), before, "ops.yaml differs from the approved S0 table")
 
     def test_all_pass_report_leaves_the_real_file_byte_identical(self):
         p = self.copy_real()
@@ -362,8 +375,8 @@ class RealOpsYamlTests(TempOps):
         self.assertEqual({b for s, n, b in m.read_ops(p)} & {"ec2-sim"}, {"ec2-sim"})
         self.cli(self.report_file(all_pass()), p, "--apply")
         self.assertEqual({b for _, _, b in m.read_ops(p)}, {"floci"})
-        with open(REAL_OPS, "rb") as f:
-            self.assertEqual(self.read(), f.read())
+        baseline = re.sub(r"(backend:\s*)[a-z][a-z0-9-]*", r"\1floci", open(REAL_OPS).read())
+        self.assertEqual(self.read().decode(), baseline)
 
     def test_pricing_and_eks_fall_back_to_their_facades(self):
         p = self.copy_real()

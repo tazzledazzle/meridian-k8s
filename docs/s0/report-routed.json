@@ -1,0 +1,380 @@
+{
+  "summary": {
+    "Pass": 37,
+    "Fail": 0,
+    "Skip": 0
+  },
+  "failed_groups": [],
+  "results": [
+    {
+      "name": "sts:GetCallerIdentity",
+      "group": "sts",
+      "status": "pass",
+      "detail": "account 000000000000"
+    },
+    {
+      "name": "ssm:PutParameter",
+      "group": "ssm",
+      "status": "pass",
+      "detail": "/s0probe/4065cf27"
+    },
+    {
+      "name": "ssm:GetParameter",
+      "group": "ssm",
+      "status": "pass",
+      "detail": "value round-trips"
+    },
+    {
+      "name": "ssm:GetParameter (AMI alias path)",
+      "group": "ssm",
+      "status": "pass",
+      "detail": "ami-0abcdef1234567891"
+    },
+    {
+      "name": "iam:CreateRole",
+      "group": "iam",
+      "status": "pass",
+      "detail": "s0probe-role-4065cf27"
+    },
+    {
+      "name": "iam:GetRole",
+      "group": "iam",
+      "status": "pass",
+      "detail": "arn:aws:iam::000000000000:role/s0probe-role-4065cf27"
+    },
+    {
+      "name": "iam:CreateInstanceProfile",
+      "group": "iam",
+      "status": "pass",
+      "detail": "s0probe-profile-4065cf27"
+    },
+    {
+      "name": "iam:AddRoleToInstanceProfile",
+      "group": "iam",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "name": "iam:GetInstanceProfile",
+      "group": "iam",
+      "status": "pass",
+      "detail": "roles s0probe-role-4065cf27"
+    },
+    {
+      "name": "iam:ListInstanceProfiles",
+      "group": "iam",
+      "status": "pass",
+      "detail": "2 profiles"
+    },
+    {
+      "name": "iam:TagInstanceProfile",
+      "group": "iam",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "name": "sqs:CreateQueue",
+      "group": "sqs",
+      "status": "pass",
+      "detail": "http://floci:4566/000000000000/s0probe-4065cf27"
+    },
+    {
+      "name": "sqs:GetQueueUrl",
+      "group": "sqs",
+      "status": "pass",
+      "detail": "http://floci:4566/000000000000/s0probe-4065cf27"
+    },
+    {
+      "name": "sqs:SendMessage",
+      "group": "sqs",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "name": "sqs:ReceiveMessage",
+      "group": "sqs",
+      "status": "pass",
+      "detail": "body round-trips"
+    },
+    {
+      "name": "sqs:DeleteMessage",
+      "group": "sqs",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "name": "eks:CreateCluster",
+      "group": "eks",
+      "status": "pass",
+      "detail": "already exists (409); creation itself was not exercised"
+    },
+    {
+      "name": "eks:DescribeCluster",
+      "group": "eks",
+      "status": "pass",
+      "detail": "version 1.35"
+    },
+    {
+      "name": "ec2:DescribeSubnets (discovery tag)",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "2 subnets"
+    },
+    {
+      "name": "ec2:DescribeSecurityGroups (discovery tag)",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "sg-d7105a0a40f66f50f"
+    },
+    {
+      "name": "ec2:DescribeImages",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "x86_64"
+    },
+    {
+      "name": "ec2:CreateLaunchTemplate",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "lt-351b25e4149678d15"
+    },
+    {
+      "name": "ec2:CreateFleet",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "i-3e70c3ea9357a42b9 (m5.large)"
+    },
+    {
+      "name": "ec2:DescribeLaunchTemplates",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "by name and by tag"
+    },
+    {
+      "name": "ec2:DescribeInstances (running, tagged)",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "running at 10.0.1.17; NOTE: no instanceLifecycle=spot (spot-only checks need simctl -any-market)"
+    },
+    {
+      "name": "ec2:DescribeInstanceStatus",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "state running, instance status \"ok\", system status \"ok\""
+    },
+    {
+      "name": "ec2:CreateTags",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "tag visible"
+    },
+    {
+      "name": "ec2:RunInstances",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "i-6d438f3ae2add0cae"
+    },
+    {
+      "name": "ec2:TerminateInstances",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "shutting-down,shutting-down"
+    },
+    {
+      "name": "ec2:DeleteLaunchTemplate",
+      "group": "ec2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "name": "ec2:DescribeAvailabilityZones",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "us-west-2a,us-west-2b,us-west-2c"
+    },
+    {
+      "name": "ec2:DescribeInstanceTypes",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "12 types listed"
+    },
+    {
+      "name": "ec2:DescribeInstanceTypeOfferings",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "19 offerings in us-west-2a"
+    },
+    {
+      "name": "ec2:DescribeSpotPriceHistory",
+      "group": "ec2",
+      "status": "pass",
+      "detail": "3 prices, first 0.012800"
+    },
+    {
+      "name": "pricing:GetProducts",
+      "group": "pricing",
+      "status": "pass",
+      "detail": "m5.large $0.096/h; 12 priced types of 12 listed by EC2"
+    },
+    {
+      "name": "iam:RemoveRoleFromInstanceProfile",
+      "group": "iam",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "name": "iam:DeleteInstanceProfile",
+      "group": "iam",
+      "status": "pass",
+      "detail": ""
+    }
+  ],
+  "required_fields": {
+    "ec2:CreateFleet": [
+      "fleetId",
+      "fleetInstanceSet.item.instanceIds.item",
+      "fleetInstanceSet.item.instanceType",
+      "errorSet.item.errorCode (absent)"
+    ],
+    "ec2:CreateLaunchTemplate": [
+      "launchTemplate.launchTemplateId"
+    ],
+    "ec2:CreateTags": [
+      "HTTP 200",
+      "tagSet.item.key/value visible in DescribeInstances"
+    ],
+    "ec2:DeleteLaunchTemplate": [
+      "HTTP 200"
+    ],
+    "ec2:DescribeAvailabilityZones": [
+      "availabilityZoneInfo.item.zoneName",
+      "availabilityZoneInfo.item.zoneId"
+    ],
+    "ec2:DescribeImages": [
+      "imagesSet.item.imageId",
+      "imagesSet.item.architecture",
+      "imagesSet.item.creationDate",
+      "imagesSet.item.rootDeviceName"
+    ],
+    "ec2:DescribeInstanceStatus": [
+      "instanceStatusSet.item.instanceId",
+      "instanceStatusSet.item.instanceState.name (running)"
+    ],
+    "ec2:DescribeInstanceTypeOfferings": [
+      "instanceTypeOfferingSet.item.instanceType",
+      "filter location"
+    ],
+    "ec2:DescribeInstanceTypes": [
+      "instanceTypeSet.item.vCpuInfo.defaultVCpus",
+      "instanceTypeSet.item.memoryInfo.sizeInMiB",
+      "instanceTypeSet.item.processorInfo.supportedArchitectures.item",
+      "instanceTypeSet.item.networkInfo.maximumNetworkInterfaces",
+      "instanceTypeSet.item.networkInfo.ipv4AddressesPerInterface",
+      "instanceTypeSet.item.supportedUsageClasses.item (on-demand, spot)"
+    ],
+    "ec2:DescribeInstances (running, tagged)": [
+      "reservationSet.item.instancesSet.item.instanceId",
+      "reservationSet.item.instancesSet.item.instanceState.name (running)",
+      "reservationSet.item.instancesSet.item.privateIpAddress",
+      "reservationSet.item.instancesSet.item.placement.availabilityZone",
+      "reservationSet.item.instancesSet.item.instanceType",
+      "reservationSet.item.instancesSet.item.tagSet.item.key/value (fleet tags)",
+      "filter tag-key"
+    ],
+    "ec2:DescribeLaunchTemplates": [
+      "launchTemplates.item.launchTemplateName (by name)",
+      "filter tag:karpenter.k8s.aws/cluster"
+    ],
+    "ec2:DescribeSecurityGroups (discovery tag)": [
+      "securityGroupInfo.item.groupId",
+      "filter tag:karpenter.sh/discovery"
+    ],
+    "ec2:DescribeSpotPriceHistory": [
+      "spotPriceHistorySet.item.spotPrice",
+      "spotPriceHistorySet.item.availabilityZone"
+    ],
+    "ec2:DescribeSubnets (discovery tag)": [
+      "subnetSet.item.subnetId",
+      "subnetSet.item.availabilityZone",
+      "filter tag:karpenter.sh/discovery"
+    ],
+    "ec2:RunInstances": [
+      "instancesSet.item.instanceId"
+    ],
+    "ec2:TerminateInstances": [
+      "instancesSet.item.currentState.name",
+      "DescribeInstances instanceState.name reaches terminated"
+    ],
+    "eks:CreateCluster": [
+      "HTTP 200/201, or 409 ResourceInUse when the cluster exists"
+    ],
+    "eks:DescribeCluster": [
+      "cluster.name",
+      "cluster.status (ACTIVE)",
+      "cluster.version",
+      "cluster.endpoint",
+      "cluster.kubernetesNetworkConfig.serviceIpv4Cidr"
+    ],
+    "iam:AddRoleToInstanceProfile": [
+      "HTTP 200"
+    ],
+    "iam:CreateInstanceProfile": [
+      "HTTP 200 (accepts Tags.member.N)"
+    ],
+    "iam:CreateRole": [
+      "HTTP 200"
+    ],
+    "iam:DeleteInstanceProfile": [
+      "HTTP 200"
+    ],
+    "iam:GetInstanceProfile": [
+      "GetInstanceProfileResult.InstanceProfile.Arn",
+      "GetInstanceProfileResult.InstanceProfile.Roles.member.RoleName"
+    ],
+    "iam:GetRole": [
+      "GetRoleResult.Role.RoleName",
+      "GetRoleResult.Role.Arn"
+    ],
+    "iam:ListInstanceProfiles": [
+      "ListInstanceProfilesResult.InstanceProfiles.member.InstanceProfileName"
+    ],
+    "iam:RemoveRoleFromInstanceProfile": [
+      "HTTP 200"
+    ],
+    "iam:TagInstanceProfile": [
+      "HTTP 200"
+    ],
+    "pricing:GetProducts": [
+      "PriceList[].product.attributes.instanceType",
+      "PriceList[].terms.OnDemand.*.priceDimensions.*.pricePerUnit.USD"
+    ],
+    "sqs:CreateQueue": [
+      "QueueUrl"
+    ],
+    "sqs:DeleteMessage": [
+      "HTTP 200"
+    ],
+    "sqs:GetQueueUrl": [
+      "QueueUrl (equals the CreateQueue url)"
+    ],
+    "sqs:ReceiveMessage": [
+      "Messages[].Body",
+      "Messages[].ReceiptHandle"
+    ],
+    "sqs:SendMessage": [
+      "HTTP 200"
+    ],
+    "ssm:GetParameter": [
+      "Parameter.Value"
+    ],
+    "ssm:GetParameter (AMI alias path)": [
+      "Parameter.Value"
+    ],
+    "ssm:PutParameter": [
+      "HTTP 200 for a name outside /aws/"
+    ],
+    "sts:GetCallerIdentity": [
+      "GetCallerIdentityResult.Account"
+    ]
+  }
+}

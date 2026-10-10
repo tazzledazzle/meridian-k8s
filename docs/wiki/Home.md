@@ -15,8 +15,7 @@ Not validated against real AWS. Every result in this wiki comes from a local run
 <!-- STATUS-BLOCK:START (update here and in Roadmap-and-Status only) -->
 ## Status
 
-- Done: spike S0 (35 of 37 probe checks pass), gateway, node-registrar, KWOK, criteria 1 to 3 by hand.
-- Being built now: a reference `ec2-sim` (serves `DescribeInstanceTypes` from `internal/catalog`) and a `pricing-facade`. Until they exist, `ops.yaml` still routes every operation to Floci.
+- Done: spike S0, gateway, node-registrar, KWOK, the reference `ec2-sim` and the `pricing-facade`, criteria 1 to 3 by hand. The approved table is applied: 34 operations run on Floci, `DescribeInstanceTypes` on `ec2-sim`, `pricing:GetProducts` on `pricing-facade`. The probe passes 37 of 37 checks against this routed plane (it passed 35 of 37 against Floci alone), and Karpenter logs no AWS errors.
 - Does not exist yet: `simctl` (spot interruption injector), the isolated no-internet gate stack, `make gate-karpenter` with its eight criteria, the gate test, CI, ADRs.
 <!-- STATUS-BLOCK:END -->
 

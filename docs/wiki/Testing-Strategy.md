@@ -24,6 +24,8 @@ Infrastructure tasks that share the Docker daemon run inline, without a tester.
 | `internal/awscall` | `FuzzBuildQuery`, `FuzzBuildREST` |
 | `internal/s0probe` | `FuzzParseXML`, `FuzzGetPath`, `FuzzParsePrice`, `FuzzSummarizeJSON`, `FuzzSummarizeMarkdown` |
 | `internal/versions` | `FuzzCheckEnv` |
+| `internal/ec2sim` | `FuzzDescribeInstanceTypes`, `FuzzGlobMatchesRegexp`, `FuzzPagedWalkEqualsUnpaged`, `FuzzNextToken` |
+| `internal/pricingfacade` | `FuzzGetProducts`, `FuzzRawRequest`, `FuzzTokenMutation`, `FuzzFilterValues` |
 | `cmd/awscall` | `FuzzCLIArgs` |
 
 A plain `go test` runs only their seed corpus. To fuzz one target for 30 seconds: `go test ./internal/awsapi -run '^$' -fuzz FuzzVerify -fuzztime 30s`.
