@@ -194,7 +194,8 @@ func TestRequestVariantsOverTheWire(t *testing.T) {
 		{"filter type EQUALS", `{"ServiceCode":"AmazonEC2","Filters":[{"Type":"EQUALS","Field":"a","Value":"b"}]}`, 400, -1},
 		{"filter type lower", `{"ServiceCode":"AmazonEC2","Filters":[{"Type":"term_match","Field":"a","Value":"b"}]}`, 400, -1},
 		{"filter value case", `{"ServiceCode":"AmazonEC2","Filters":[{"Type":"TERM_MATCH","Field":"operatingSystem","Value":"LINUX"}]}`, 200, 0},
-		{"filter field case", `{"ServiceCode":"AmazonEC2","Filters":[{"Type":"TERM_MATCH","Field":"OperatingSystem","Value":"Linux"}]}`, 200, 0},
+		// Field names are case-insensitive (Karpenter sends "serviceCode" for the stored "servicecode"); values are not.
+		{"filter field case", `{"ServiceCode":"AmazonEC2","Filters":[{"Type":"TERM_MATCH","Field":"OperatingSystem","Value":"Linux"}]}`, 200, 12},
 		{"filters null elem", `{"ServiceCode":"AmazonEC2","Filters":[null]}`, 400, -1},
 		{"filters wrong type", `{"ServiceCode":"AmazonEC2","Filters":"x"}`, 400, -1},
 		{"unknown field ignored", `{"ServiceCode":"AmazonEC2","Bogus":1}`, 200, n},

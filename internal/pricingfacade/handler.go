@@ -75,9 +75,11 @@ func newProduct(t catalog.Type) product {
 		"version": version, "publicationDate": publicationDate,
 	}
 	b, _ := json.Marshal(doc) // maps marshal in sorted key order, so the bytes are stable
-	filterable := map[string]string{"productFamily": "Compute Instance", "marketoption": "OnDemand"}
+	// Filter field names are case-insensitive (Karpenter sends "serviceCode" for the attribute "servicecode"),
+	// so the keys are stored lower-cased and matches() lower-cases the requested field.
+	filterable := map[string]string{"productfamily": "Compute Instance", "marketoption": "OnDemand"}
 	for k, v := range attrs {
-		filterable[k] = v
+		filterable[strings.ToLower(k)] = v
 	}
 	return product{doc: string(b), attrs: filterable}
 }
@@ -201,7 +203,7 @@ func validate(in getProductsRequest) string {
 // matches applies TERM_MATCH filters with AND semantics; a field the product does not have matches nothing.
 func matches(p product, fs []filter) bool {
 	for _, f := range fs {
-		if v, ok := p.attrs[f.Field]; !ok || v != f.Value {
+		if v, ok := p.attrs[strings.ToLower(f.Field)]; !ok || v != f.Value {
 			return false
 		}
 	}
