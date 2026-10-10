@@ -51,7 +51,7 @@ flowchart LR
   G -. planned .-> E["ec2-sim<br/>DescribeInstanceTypes"]
   G -. planned .-> P["pricing-facade<br/>GetProducts"]
   R -- "polls running instances" --> G
-  R -- "creates Node objects" --> W
+  R -- "creates Nodes; KWOK keeps them Ready" --> W
 ```
 
 1. Karpenter sends signed AWS API calls to `aws-gateway`.
@@ -107,7 +107,7 @@ make s0-down         # needs Docker: delete the cluster and the stack
 
 ## Testing
 
-Each package has unit tests. The gateway, SigV4, `awscall`, probe, trace, and versions packages also have adversarial tests. Five packages have Go fuzz targets (`internal/awsapi`, `internal/awscall`, `internal/gateway`, `internal/s0probe`, `internal/trace`).
+Every package except `cmd/node-registrar` has unit tests. The gateway, SigV4, `awscall`, probe, trace, and versions packages also have adversarial tests. Five packages have Go fuzz targets (`internal/awsapi`, `internal/awscall`, `internal/gateway`, `internal/s0probe`, `internal/trace`).
 
 ```sh
 make test            # go test ./...
@@ -115,7 +115,7 @@ make test-scripts    # Python tests for the tooling scripts
 make lint-versions   # fail on any unpinned entry in versions.yaml
 ```
 
-`go build ./...` and `go test ./... -count=1` pass on the current checkout. Go tests need no Docker. The Python tests were not run while writing this README.
+Go tests need no Docker.
 
 ## Pinned versions
 
