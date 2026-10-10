@@ -141,8 +141,10 @@ func canonicalRequest(r *http.Request, body []byte, signedHeaders []string, serv
 		} else {
 			val = strings.Join(r.Header.Values(name), ",")
 		}
-		// Header values are trimmed and runs of whitespace collapsed to one space.
-		hdr.WriteString(name + ":" + strings.Join(strings.Fields(val), " ") + "\n")
+		// Header values are trimmed and runs of space/tab collapsed to one space. ASCII only:
+		// strings.Fields would also collapse Unicode spaces (NBSP), which SDKs do not.
+		asciiBlank := func(r rune) bool { return r == ' ' || r == '\t' }
+		hdr.WriteString(name + ":" + strings.Join(strings.FieldsFunc(val, asciiBlank), " ") + "\n")
 	}
 	return strings.Join([]string{
 		r.Method, path, query, hdr.String(), strings.Join(signedHeaders, ";"), hexSHA256(body),
@@ -216,8 +218,10 @@ func Verify(r *http.Request, body []byte, lookup SecretLookup, now time.Time, sk
 	if err := checkSignedHeaders(r, a.SignedHeaders); err != nil {
 		return Auth{}, err
 	}
-	t, err := time.Parse(amzDateFormat, r.Header.Get("X-Amz-Date"))
-	if err != nil {
+	// time.Parse tolerates fractional seconds the layout does not mention, so pin the exact length.
+	dateHdr := r.Header.Get("X-Amz-Date")
+	t, err := time.Parse(amzDateFormat, dateHdr)
+	if err != nil || len(dateHdr) != len(amzDateFormat) {
 		return Auth{}, ErrInvalidAuth
 	}
 	// The credential scope date must be the day of the signing timestamp.
