@@ -19,7 +19,7 @@
       "name": "ssm:PutParameter",
       "group": "ssm",
       "status": "pass",
-      "detail": "/s0probe/821a7261"
+      "detail": "/s0probe/8b14783e"
     },
     {
       "name": "ssm:GetParameter",
@@ -37,19 +37,19 @@
       "name": "iam:CreateRole",
       "group": "iam",
       "status": "pass",
-      "detail": "s0probe-role-821a7261"
+      "detail": "s0probe-role-8b14783e"
     },
     {
       "name": "iam:GetRole",
       "group": "iam",
       "status": "pass",
-      "detail": "arn:aws:iam::000000000000:role/s0probe-role-821a7261"
+      "detail": "arn:aws:iam::000000000000:role/s0probe-role-8b14783e"
     },
     {
       "name": "iam:CreateInstanceProfile",
       "group": "iam",
       "status": "pass",
-      "detail": "s0probe-profile-821a7261"
+      "detail": "s0probe-profile-8b14783e"
     },
     {
       "name": "iam:AddRoleToInstanceProfile",
@@ -61,13 +61,13 @@
       "name": "iam:GetInstanceProfile",
       "group": "iam",
       "status": "pass",
-      "detail": "roles s0probe-role-821a7261"
+      "detail": "roles s0probe-role-8b14783e"
     },
     {
       "name": "iam:ListInstanceProfiles",
       "group": "iam",
       "status": "pass",
-      "detail": "1 profiles"
+      "detail": "2 profiles"
     },
     {
       "name": "iam:TagInstanceProfile",
@@ -79,13 +79,13 @@
       "name": "sqs:CreateQueue",
       "group": "sqs",
       "status": "pass",
-      "detail": "http://floci:4566/000000000000/s0probe-821a7261"
+      "detail": "http://floci:4566/000000000000/s0probe-8b14783e"
     },
     {
       "name": "sqs:GetQueueUrl",
       "group": "sqs",
       "status": "pass",
-      "detail": "http://floci:4566/000000000000/s0probe-821a7261"
+      "detail": "http://floci:4566/000000000000/s0probe-8b14783e"
     },
     {
       "name": "sqs:SendMessage",
@@ -139,13 +139,13 @@
       "name": "ec2:CreateLaunchTemplate",
       "group": "ec2",
       "status": "pass",
-      "detail": "lt-6bedcddb197ff9e03"
+      "detail": "lt-48139b19103936947"
     },
     {
       "name": "ec2:CreateFleet",
       "group": "ec2",
       "status": "pass",
-      "detail": "i-f656947323cce433f (m5.large)"
+      "detail": "i-d28f3b5ea2b2975d6 (m5.large)"
     },
     {
       "name": "ec2:DescribeLaunchTemplates",
@@ -157,7 +157,7 @@
       "name": "ec2:DescribeInstances (running, tagged)",
       "group": "ec2",
       "status": "pass",
-      "detail": "running at 10.0.1.10; NOTE: no instanceLifecycle=spot (spot-only checks need simctl -any-market)"
+      "detail": "running at 10.0.1.15; NOTE: no instanceLifecycle=spot (spot-only checks need simctl -any-market)"
     },
     {
       "name": "ec2:DescribeInstanceStatus",
@@ -175,7 +175,7 @@
       "name": "ec2:RunInstances",
       "group": "ec2",
       "status": "pass",
-      "detail": "i-84d2286a3339b6a0d"
+      "detail": "i-98d58f39d5284276e"
     },
     {
       "name": "ec2:TerminateInstances",

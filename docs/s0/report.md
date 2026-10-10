@@ -5,18 +5,18 @@
 | Check | Group | Status | Detail |
 |---|---|---|---|
 | sts:GetCallerIdentity | sts | pass | account 000000000000 |
-| ssm:PutParameter | ssm | pass | /s0probe/821a7261 |
+| ssm:PutParameter | ssm | pass | /s0probe/8b14783e |
 | ssm:GetParameter | ssm | pass | value round-trips |
 | ssm:GetParameter (AMI alias path) | ssm | pass | ami-0abcdef1234567891 |
-| iam:CreateRole | iam | pass | s0probe-role-821a7261 |
-| iam:GetRole | iam | pass | arn:aws:iam::000000000000:role/s0probe-role-821a7261 |
-| iam:CreateInstanceProfile | iam | pass | s0probe-profile-821a7261 |
+| iam:CreateRole | iam | pass | s0probe-role-8b14783e |
+| iam:GetRole | iam | pass | arn:aws:iam::000000000000:role/s0probe-role-8b14783e |
+| iam:CreateInstanceProfile | iam | pass | s0probe-profile-8b14783e |
 | iam:AddRoleToInstanceProfile | iam | pass |  |
-| iam:GetInstanceProfile | iam | pass | roles s0probe-role-821a7261 |
-| iam:ListInstanceProfiles | iam | pass | 1 profiles |
+| iam:GetInstanceProfile | iam | pass | roles s0probe-role-8b14783e |
+| iam:ListInstanceProfiles | iam | pass | 2 profiles |
 | iam:TagInstanceProfile | iam | pass |  |
-| sqs:CreateQueue | sqs | pass | http://floci:4566/000000000000/s0probe-821a7261 |
-| sqs:GetQueueUrl | sqs | pass | http://floci:4566/000000000000/s0probe-821a7261 |
+| sqs:CreateQueue | sqs | pass | http://floci:4566/000000000000/s0probe-8b14783e |
+| sqs:GetQueueUrl | sqs | pass | http://floci:4566/000000000000/s0probe-8b14783e |
 | sqs:SendMessage | sqs | pass |  |
 | sqs:ReceiveMessage | sqs | pass | body round-trips |
 | sqs:DeleteMessage | sqs | pass |  |
@@ -25,13 +25,13 @@
 | ec2:DescribeSubnets (discovery tag) | ec2 | pass | 2 subnets |
 | ec2:DescribeSecurityGroups (discovery tag) | ec2 | pass | sg-d7105a0a40f66f50f |
 | ec2:DescribeImages | ec2 | pass | x86_64 |
-| ec2:CreateLaunchTemplate | ec2 | pass | lt-6bedcddb197ff9e03 |
-| ec2:CreateFleet | ec2 | pass | i-f656947323cce433f (m5.large) |
+| ec2:CreateLaunchTemplate | ec2 | pass | lt-48139b19103936947 |
+| ec2:CreateFleet | ec2 | pass | i-d28f3b5ea2b2975d6 (m5.large) |
 | ec2:DescribeLaunchTemplates | ec2 | pass | by name and by tag |
-| ec2:DescribeInstances (running, tagged) | ec2 | pass | running at 10.0.1.10; NOTE: no instanceLifecycle=spot (spot-only checks need simctl -any-market) |
+| ec2:DescribeInstances (running, tagged) | ec2 | pass | running at 10.0.1.15; NOTE: no instanceLifecycle=spot (spot-only checks need simctl -any-market) |
 | ec2:DescribeInstanceStatus | ec2 | pass | state running, instance status "ok", system status "ok" |
 | ec2:CreateTags | ec2 | pass | tag visible |
-| ec2:RunInstances | ec2 | pass | i-84d2286a3339b6a0d |
+| ec2:RunInstances | ec2 | pass | i-98d58f39d5284276e |
 | ec2:TerminateInstances | ec2 | pass | shutting-down,shutting-down |
 | ec2:DeleteLaunchTemplate | ec2 | pass |  |
 | ec2:DescribeAvailabilityZones | ec2 | pass | us-west-2a,us-west-2b,us-west-2c |
