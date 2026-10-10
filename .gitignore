@@ -10,3 +10,4 @@ trace/gate/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+.env.images.tmp
