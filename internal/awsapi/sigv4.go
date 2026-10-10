@@ -179,7 +179,7 @@ func checkSignedHeaders(r *http.Request, names []string) error {
 	if len(names) == 0 || len(names) > maxSignedHeaders {
 		return ErrInvalidAuth
 	}
-	var hasHost, hasDate bool
+	var hasHost, hasDate, hasTarget bool
 	for i, n := range names {
 		if n == "" || n != strings.ToLower(n) || (i > 0 && names[i-1] >= n) {
 			return ErrInvalidAuth
@@ -189,12 +189,18 @@ func checkSignedHeaders(r *http.Request, names []string) error {
 			hasHost = true
 		case "x-amz-date":
 			hasDate = true
+		case "x-amz-target":
+			hasTarget = true
 		}
 		if n != "host" && len(r.Header.Values(n)) == 0 {
 			return ErrInvalidAuth
 		}
 	}
 	if !hasHost || !hasDate {
+		return ErrInvalidAuth
+	}
+	// An operation selector the signature does not cover could be swapped by a replaying caller.
+	if len(r.Header.Values("X-Amz-Target")) > 0 && !hasTarget {
 		return ErrInvalidAuth
 	}
 	return nil
@@ -264,6 +270,10 @@ func Sign(r *http.Request, body []byte, accessKey, secret, region, service strin
 	signedNames := []string{"host", "x-amz-date"}
 	if r.Header.Get("Content-Type") != "" {
 		signedNames = []string{"content-type", "host", "x-amz-date"}
+	}
+	// X-Amz-Target selects the operation of JSON services, so it must be covered by the signature.
+	if len(r.Header.Values("X-Amz-Target")) > 0 { // same presence test as Verify, so an empty value is signed too
+		signedNames = append(signedNames, "x-amz-target") // sorts after x-amz-date
 	}
 	a := Auth{AccessKey: accessKey, Date: t.Format("20060102"), Region: region, Service: service, SignedHeaders: signedNames}
 	sig, err := signature(r, body, a, secret, t)

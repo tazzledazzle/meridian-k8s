@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/tazzledazzle/meridian/internal/awsapi"
@@ -75,6 +76,9 @@ var protocolOf = map[string]string{
 	"eks": "rest",
 }
 
+// targetPrefix is the X-Amz-Target prefix each JSON service uses.
+var targetPrefix = map[string]string{"sqs": "AmazonSQS", "ssm": "AmazonSSM", "pricing": "AWSPriceListService"}
+
 var (
 	opNameRE = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{0,127}$`)                      // bounded, log- and XML-safe
 	targetRE = regexp.MustCompile(`^[A-Za-z0-9_]{1,128}\.[A-Za-z][A-Za-z0-9_]{0,127}$`) // exactly Prefix.Operation
@@ -91,11 +95,18 @@ func operation(r *http.Request, body []byte, service string) (string, error) {
 		if r.Method != http.MethodPost || len(targets) != 1 || !targetRE.MatchString(targets[0]) {
 			return "", errors.New("expected a POST with exactly one X-Amz-Target of the form Service.Operation")
 		}
+		// The target prefix must match the credential-scope service, so an sqs-scoped request cannot name an ssm operation.
+		if prefix, _, _ := strings.Cut(targets[0], "."); prefix != targetPrefix[service] {
+			return "", errors.New("X-Amz-Target prefix does not match the signed service")
+		}
 		op, _ := awsapi.TargetOp(r)
 		return op, nil
 	case "rest": // REST-JSON (eks): the operation is implied by method and path
 		if m := eksPath.FindStringSubmatch(r.URL.Path); r.Method == http.MethodGet && m != nil {
 			return "DescribeCluster", nil
+		}
+		if r.Method == http.MethodPost && r.URL.Path == "/clusters" { // seeding creates the cluster
+			return "CreateCluster", nil
 		}
 		return "", errors.New("unrecognised request path")
 	case "query": // query protocol: only the Action parameter
@@ -144,7 +155,12 @@ func New(cfg Config) http.Handler {
 		}
 		body, err := awsapi.ReadBody(r, maxBody)
 		if err != nil {
-			awsapi.WriteError(w, awsapi.StyleJSON, http.StatusRequestEntityTooLarge, "RequestEntityTooLarge", err.Error())
+			// Fixed messages only: a raw read error can carry internal addresses, and this runs before authentication.
+			if strings.Contains(err.Error(), "exceeds") {
+				awsapi.WriteError(w, awsapi.StyleJSON, http.StatusRequestEntityTooLarge, "RequestEntityTooLarge", "request body is too large")
+				return
+			}
+			awsapi.WriteError(w, awsapi.StyleJSON, http.StatusBadRequest, "IncompleteBody", "the request body could not be read")
 			return
 		}
 		// Authenticate first: nothing about operations or backends is revealed to unauthenticated callers.
@@ -154,6 +170,11 @@ func New(cfg Config) http.Handler {
 			awsapi.WriteError(w, awsapi.StyleJSON, http.StatusForbidden, authError(err), err.Error())
 			return
 		}
+		// ReverseProxy removes every header named in Connection, so a client could make the backend lose the signed
+		// Authorization. Drop connection-control headers after verification so the backend sees what was verified.
+		r.Header.Del("Connection")
+		r.Header.Del("Proxy-Connection")
+		r.Header.Del("Keep-Alive")
 		style := styleFor(auth.Service)
 		if _, known := protocolOf[auth.Service]; !known {
 			cfg.Logf("request for unsupported service %q", auth.Service)
