@@ -1,0 +1,6 @@
+.env
+.env.images
+.ami-id
+bin/
+trace/raw/
+trace/gate/
