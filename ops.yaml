@@ -8,7 +8,7 @@ ops:
   - {service: ec2, name: TerminateInstances, protocol: query, backend: floci, fidelity: behavior-inferred}
   - {service: ec2, name: DescribeInstances, protocol: query, backend: floci, fidelity: behavior-inferred}
   - {service: ec2, name: DescribeInstanceStatus, protocol: query, backend: floci, fidelity: behavior-inferred}
-  - {service: ec2, name: DescribeInstanceTypes, protocol: query, backend: floci, fidelity: behavior-inferred}
+  - {service: ec2, name: DescribeInstanceTypes, protocol: query, backend: ec2-sim, fidelity: behavior-inferred}
   - {service: ec2, name: DescribeInstanceTypeOfferings, protocol: query, backend: floci, fidelity: behavior-inferred}
   - {service: ec2, name: DescribeAvailabilityZones, protocol: query, backend: floci, fidelity: behavior-inferred}
   - {service: ec2, name: DescribeSubnets, protocol: query, backend: floci, fidelity: behavior-inferred}

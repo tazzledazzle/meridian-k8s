@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -90,12 +91,14 @@ func opsWithEC2Sim(t *testing.T) ops.List {
 	if err != nil {
 		t.Fatal(err)
 	}
-	old := "name: DescribeInstanceTypes, protocol: query, backend: floci"
-	if strings.Count(string(raw), old) != 1 {
-		t.Fatalf("ops.yaml no longer has exactly one %q line", old)
+	// ops.yaml routes DescribeInstanceTypes to floci before the S0 table is applied and to ec2-sim after.
+	// Force ec2-sim in the temp copy so the test holds in both states.
+	re := regexp.MustCompile(`(name: DescribeInstanceTypes, protocol: query, backend: )[a-z][a-z0-9-]*`)
+	if len(re.FindAll(raw, -1)) != 1 {
+		t.Fatalf("ops.yaml no longer has exactly one DescribeInstanceTypes line")
 	}
 	p := filepath.Join(t.TempDir(), "ops.yaml")
-	if err := os.WriteFile(p, []byte(strings.Replace(string(raw), old, "name: DescribeInstanceTypes, protocol: query, backend: ec2-sim", 1)), 0o600); err != nil {
+	if err := os.WriteFile(p, re.ReplaceAll(raw, []byte("${1}ec2-sim")), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	list, err := ops.Load(p)
