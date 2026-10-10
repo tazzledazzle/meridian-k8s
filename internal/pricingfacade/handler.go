@@ -43,17 +43,24 @@ const (
 func New() *Handler {
 	h := &Handler{}
 	for _, t := range catalog.Types {
-		h.products = append(h.products, newProduct(t))
+		h.products = append(h.products, newProduct(t, "Shared", "Compute Instance"))
 	}
+	// Karpenter 1.14.1 runs a standard and a bare-metal query and fails with "no on-demand pricing found" when
+	// EITHER is empty. The catalog has no bare-metal type, so one product answers the bare-metal query; it is not
+	// a catalog type, so ec2-sim never offers it and Karpenter never launches it.
+	h.products = append(h.products, newProduct(bareMetal, "Dedicated", "Compute Instance (bare metal)"))
 	return h
 }
 
-// newProduct renders the AWS price list document for one catalog type.
-func newProduct(t catalog.Type) product {
+// bareMetal is the single bare-metal product (price and size follow the real m5.metal).
+var bareMetal = catalog.Type{Name: "m5.metal", VCPU: 96, MemoryMiB: 393216, OnDemand: 4.608}
+
+// newProduct renders the AWS price list document for one instance type, tenancy and product family.
+func newProduct(t catalog.Type, tenancy, family string) product {
 	sku := skuFor(t.Name)
 	attrs := map[string]string{
 		"servicecode": "AmazonEC2", "location": "US West (Oregon)", "locationType": "AWS Region",
-		"instanceType": t.Name, "tenancy": "Shared", "operatingSystem": "Linux", "preInstalledSw": "NA",
+		"instanceType": t.Name, "tenancy": tenancy, "operatingSystem": "Linux", "preInstalledSw": "NA",
 		"capacitystatus": "Used", "regionCode": catalog.Region, "usagetype": "USW2-BoxUsage:" + t.Name,
 		"vcpu": strconv.Itoa(t.VCPU), "memory": strconv.FormatFloat(float64(t.MemoryMiB)/1024, 'f', -1, 64) + " GiB",
 		"operation": "RunInstances", "licenseModel": "No License required",
@@ -61,7 +68,7 @@ func newProduct(t catalog.Type) product {
 	term := sku + "." + offerTermCode
 	rate := term + "." + rateCodeSuffix
 	doc := map[string]any{
-		"product":     map[string]any{"productFamily": "Compute Instance", "attributes": attrs, "sku": sku},
+		"product":     map[string]any{"productFamily": family, "attributes": attrs, "sku": sku},
 		"serviceCode": "AmazonEC2",
 		"terms": map[string]any{"OnDemand": map[string]any{term: map[string]any{
 			"offerTermCode": offerTermCode, "sku": sku, "effectiveDate": publicationDate, "termAttributes": map[string]string{},
@@ -77,7 +84,7 @@ func newProduct(t catalog.Type) product {
 	b, _ := json.Marshal(doc) // maps marshal in sorted key order, so the bytes are stable
 	// Filter field names are case-insensitive (Karpenter sends "serviceCode" for the attribute "servicecode"),
 	// so the keys are stored lower-cased and matches() lower-cases the requested field.
-	filterable := map[string]string{"productfamily": "Compute Instance", "marketoption": "OnDemand"}
+	filterable := map[string]string{"productfamily": family, "marketoption": "OnDemand"}
 	for k, v := range attrs {
 		filterable[strings.ToLower(k)] = v
 	}

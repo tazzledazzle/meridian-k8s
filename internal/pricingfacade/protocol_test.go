@@ -37,11 +37,11 @@ func TestFiltersAreANDedExactAndUnknownThingsMatchNothing(t *testing.T) {
 		{"case sensitive", `[` + f("operatingSystem", "linux") + `]`, 0},
 		{"unknown field", `[` + f("nonsense", "x") + `]`, 0},
 		{"unknown region", `[` + f("regionCode", "us-east-1") + `]`, 0},
-		{"location name", `[` + f("location", "US West (Oregon)") + `]`, len(catalog.Types)},
+		{"location name", `[` + f("location", "US West (Oregon)") + `]`, totalProducts},
 		{"shared tenancy", `[` + f("tenancy", "Shared") + `]`, len(catalog.Types)},
-		{"dedicated tenancy", `[` + f("tenancy", "Dedicated") + `]`, 0},
-		{"no filters", `[]`, len(catalog.Types)},
-		{"null filters", `null`, len(catalog.Types)},
+		{"dedicated tenancy", `[` + f("tenancy", "Dedicated") + `]`, 1}, // the one bare-metal product
+		{"no filters", `[]`, totalProducts},
+		{"null filters", `null`, totalProducts},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -111,7 +111,7 @@ func TestPaginationWalksEverythingExactlyOnceForEveryPageSize(t *testing.T) {
 }
 
 func TestPageBoundaryHasNoTokenWhenNothingRemains(t *testing.T) {
-	n := len(catalog.Types)
+	n := totalProducts
 	_, body, _ := post(t, New(), target, `{"ServiceCode":"AmazonEC2","MaxResults":`+strconv.Itoa(n)+`}`)
 	if r := decode(t, body); len(r.PriceList) != n || r.NextToken != "" {
 		t.Fatalf("entries=%d token=%q", len(r.PriceList), r.NextToken)
@@ -226,7 +226,7 @@ func TestMethodContentTypeAndBodySize(t *testing.T) {
 }
 
 func TestUnknownRequestFieldsAreIgnored(t *testing.T) {
-	if n := count(t, `{"ServiceCode":"AmazonEC2","Extra":{"a":1},"MaxResults":null,"NextToken":null}`); n != len(catalog.Types) {
+	if n := count(t, `{"ServiceCode":"AmazonEC2","Extra":{"a":1},"MaxResults":null,"NextToken":null}`); n != totalProducts {
 		t.Fatalf("got %d", n)
 	}
 }

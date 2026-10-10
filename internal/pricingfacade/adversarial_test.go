@@ -166,7 +166,7 @@ func TestKarpenterWalkOverRealHTTPMatchesCatalog(t *testing.T) {
 func TestRequestVariantsOverTheWire(t *testing.T) {
 	srv := httptest.NewServer(New())
 	defer srv.Close()
-	n := len(catalog.Types)
+	n := totalProducts // unfiltered listings include the bare-metal product
 	cases := []struct {
 		name, body string
 		status     int
@@ -195,7 +195,7 @@ func TestRequestVariantsOverTheWire(t *testing.T) {
 		{"filter type lower", `{"ServiceCode":"AmazonEC2","Filters":[{"Type":"term_match","Field":"a","Value":"b"}]}`, 400, -1},
 		{"filter value case", `{"ServiceCode":"AmazonEC2","Filters":[{"Type":"TERM_MATCH","Field":"operatingSystem","Value":"LINUX"}]}`, 200, 0},
 		// Field names are case-insensitive (Karpenter sends "serviceCode" for the stored "servicecode"); values are not.
-		{"filter field case", `{"ServiceCode":"AmazonEC2","Filters":[{"Type":"TERM_MATCH","Field":"OperatingSystem","Value":"Linux"}]}`, 200, 12},
+		{"filter field case", `{"ServiceCode":"AmazonEC2","Filters":[{"Type":"TERM_MATCH","Field":"OperatingSystem","Value":"Linux"}]}`, 200, n},
 		{"filters null elem", `{"ServiceCode":"AmazonEC2","Filters":[null]}`, 400, -1},
 		{"filters wrong type", `{"ServiceCode":"AmazonEC2","Filters":"x"}`, 400, -1},
 		{"unknown field ignored", `{"ServiceCode":"AmazonEC2","Bogus":1}`, 200, n},
@@ -254,7 +254,7 @@ func TestEveryPageSizeYieldsEachTypeOnceInStableOrder(t *testing.T) {
 	h := New()
 	for size := 1; size <= 100; size++ {
 		got := advFullList(t, h, size, "[]")
-		if len(got) != len(catalog.Types) {
+		if len(got) != totalProducts {
 			t.Fatalf("size %d: %d items", size, len(got))
 		}
 		for i, ct := range catalog.Types {
@@ -344,7 +344,7 @@ func TestTokenReplayIsIdempotentAndWorksAcrossInstances(t *testing.T) {
 func TestTokenOffsetEdgesAreRejected(t *testing.T) {
 	h := New()
 	fp := fingerprint(getProductsRequest{ServiceCode: "AmazonEC2"})
-	for _, off := range []string{"0", "-1", "00", "01", "+1", "12", "13", "99999999999999999999", " 1", "1.0", "0x1"} {
+	for _, off := range []string{"0", "-1", "00", "01", "+1", "13", "14", "99999999999999999999", " 1", "1.0", "0x1"} {
 		tok := base64.RawURLEncoding.EncodeToString([]byte("pf1:" + off + ":" + fp))
 		code, out, _ := post(t, h, target, `{"ServiceCode":"AmazonEC2","NextToken":"`+tok+`"}`)
 		if code != 400 {
@@ -361,10 +361,14 @@ func TestDocumentsMatchAWSShape(t *testing.T) {
 	list := decode(t, out).PriceList
 	skus := map[string]bool{}
 	priceRe := regexp.MustCompile(`^\d+\.\d{10}$`)
-	if len(list) != len(catalog.Types) {
+	if len(list) != totalProducts {
 		t.Fatalf("%d docs", len(list))
 	}
-	for i, e := range list {
+	// The first len(catalog.Types) documents are the catalog types in order; the last is the bare-metal product.
+	if name, _ := parseLikeKarpenter(t, list[len(list)-1]); name != bareMetal.Name {
+		t.Errorf("last document is %q, want the bare-metal product %q", name, bareMetal.Name)
+	}
+	for i, e := range list[:len(catalog.Types)] {
 		ct := catalog.Types[i]
 		var d map[string]any
 		if err := json.Unmarshal([]byte(e), &d); err != nil {
@@ -446,7 +450,7 @@ func TestDocumentsMatchAWSShape(t *testing.T) {
 			t.Errorf("version %v", d["version"])
 		}
 	}
-	if len(skus) != len(catalog.Types) {
+	if len(skus) != len(catalog.Types) { // SKUs of the catalog documents; the bare-metal one is checked above
 		t.Fatalf("%d skus", len(skus))
 	}
 }
