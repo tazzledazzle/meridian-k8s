@@ -100,7 +100,7 @@ func Diff(old, cur []string) (added, removed []string) {
 }
 
 const goldenHeader = "# Karpenter AWS call surface (service:operation), sorted, counts omitted.\n" +
-	"# Regenerate with `make trace`; review any diff by hand.\n"
+	"# Accept a new surface with `make golden-update` after reviewing the diff by hand.\n"
 
 // WriteGolden writes a golden call list atomically (temp file, then rename), so
 // a kill during the periodic flush never leaves a truncated file.

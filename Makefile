@@ -1,5 +1,5 @@
 # Every target below also exists in Bazel: `bazel run //:<target>` (tests: `bazel test //:<target>`). See docs/build/bazel.md.
-.PHONY: gate-up gate-down kwok-up vendor-kwok deploy-registrar init test test-scripts lint-versions env-images build build-linux s0-up s0-down seed trace-show check-sock s0-probe s0-probe-moto s0-decide
+.PHONY: gate-karpenter golden-update gate-up gate-down kwok-up vendor-kwok deploy-registrar init test test-scripts lint-versions env-images build build-linux s0-up s0-down seed trace-show check-sock s0-probe s0-probe-moto s0-decide
 
 # Generates local credentials; safe to run repeatedly.
 init:
@@ -91,3 +91,14 @@ gate-up:
 # Removes the gate AND the S0 stack (cluster, Compose projects, networks), so no state is inherited.
 gate-down:
 	./scripts/gate-down.sh
+
+# The Karpenter proof gate (G0): tear down, build from scratch, run the eight criteria, tear down.
+# GATE_KEEP=1 leaves the stack running afterwards for debugging.
+gate-karpenter:
+	./scripts/gate-up.sh
+	status=0; go test -tags gate -count=1 -timeout 45m ./test/gate/ -v || status=$$?; \
+	  if [ -z "$$GATE_KEEP" ]; then ./scripts/gate-down.sh; fi; exit $$status
+
+# Accepts the recorded call surface from the last gate run as the new golden file. Review the diff first.
+golden-update:
+	mkdir -p trace/golden && cp trace/gate/calls.golden trace/golden/karpenter-calls.golden

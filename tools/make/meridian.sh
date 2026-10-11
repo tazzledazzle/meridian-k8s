@@ -53,6 +53,7 @@ copy_bins() {
   echo "wrote $(echo $paths | wc -w | tr -d ' ') binaries to $dest/"
 }
 step_build()       { copy_bins bin "${MB_HOST_BINS:?}"; }
+step_gate_up()    { step_init; step_env_images; step_build_linux; MERIDIAN_PREBUILT=1 "$(bin gate_up)"; }
 step_build_linux() { copy_bins bin/linux "${MB_LINUX_BINS:?}"; }
 
 step_check_sock()  { "$(bin check_no_sock)" deploy/compose.s0.yaml; }
@@ -93,7 +94,15 @@ case "$target" in
     "$(bin s0matrix)" "${reports[@]}" ops.yaml ${apply[@]+"${apply[@]}"}
     ;;
   # gate-up.sh calls make for init/env-images/build-linux unless told they are done; here the dispatcher did them.
-  gate-up)    step_init; step_env_images; step_build_linux; MERIDIAN_PREBUILT=1 "$(bin gate_up)" ;;
+  gate-up)    step_gate_up ;;
+  gate-karpenter)
+    # Same as the Makefile: bring the stack up, run the eight criteria, tear down unless GATE_KEEP is set.
+    step_gate_up
+    status=0
+    go test -tags gate -count=1 -timeout 45m ./test/gate/ -v || status=$?
+    if [ -z "${GATE_KEEP:-}" ]; then "$(bin gate_down)"; fi
+    exit $status ;;
+  golden-update) mkdir -p trace/golden && cp trace/gate/calls.golden trace/golden/karpenter-calls.golden ;;
   gate-down)  "$(bin gate_down)" ;;
   kwok-up)    step_env_images; "$(bin kwok_up)" ;;
   vendor-kwok) step_env_images; "$(bin vendor_kwok)" ;;

@@ -30,7 +30,7 @@ docker network inspect meridian-gate --format '{{.Internal}}' | grep -q true || 
 if python3 scripts/profiles.py ops.yaml | grep -q moto; then ./scripts/seed-moto.sh; fi
 ./scripts/images-save-system.sh
 ./scripts/k3d-up.sh
-k3d image import meridian/node-registrar:gate --cluster meridian-g0 --mode direct >/dev/null
+k3d image import meridian/node-registrar:gate meridian/tools:gate --cluster meridian-g0 --mode direct >/dev/null   # tools: the gate probes egress from inside a pod
 
 # Render every manifest once, load the images they name, then apply the rewritten (local-name) copies.
 KWOK_TAG="registry.k8s.io/kwok/kwok:${KWOK_VERSION}"

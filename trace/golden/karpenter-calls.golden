@@ -1,0 +1,28 @@
+# Karpenter AWS call surface (service:operation), sorted, counts omitted.
+# Accept a new surface with `make golden-update` after reviewing the diff by hand.
+ec2:CreateFleet
+ec2:CreateLaunchTemplate
+ec2:CreateTags
+ec2:DeleteLaunchTemplate
+ec2:DescribeImages
+ec2:DescribeInstanceStatus
+ec2:DescribeInstanceTypeOfferings
+ec2:DescribeInstanceTypes
+ec2:DescribeInstances
+ec2:DescribeLaunchTemplates
+ec2:DescribeSecurityGroups
+ec2:DescribeSpotPriceHistory
+ec2:DescribeSubnets
+ec2:RunInstances
+ec2:TerminateInstances
+eks:DescribeCluster
+iam:AddRoleToInstanceProfile
+iam:CreateInstanceProfile
+iam:GetInstanceProfile
+iam:ListInstanceProfiles
+pricing:GetProducts
+sqs:DeleteMessage
+sqs:GetQueueUrl
+sqs:ReceiveMessage
+sqs:SendMessage
+ssm:GetParameter

@@ -84,6 +84,19 @@ make_target(
 )
 
 make_target(
+    name = "gate-karpenter",
+    bin_sets = {"LINUX_BINS": ":linux_bins"},
+    tools = {
+        "gate_down": "//scripts:gate-down",
+        "gate_up": "//scripts:gate-up",
+        "init_env": "//scripts:init-env",
+        "versionsenv": ":versionsenv_host",
+    },
+)
+
+make_target(name = "golden-update")
+
+make_target(
     name = "gate-down",
     tools = {"gate_down": "//scripts:gate-down"},
 )

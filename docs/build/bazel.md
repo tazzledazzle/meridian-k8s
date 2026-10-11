@@ -30,6 +30,8 @@ Runnable targets are `bazel run //:<name> [-- args]`; they act on the real works
 | `make s0-up` | `bazel run //:s0-up` | init, env-images, build-linux, check-sock, then compose up, seed, k3d-up, karpenter-install |
 | `make s0-down` | `bazel run //:s0-down` | |
 | `make gate-up` | `bazel run //:gate-up` | init, env-images, build-linux first; tears down S0 and the old gate, then builds the isolated stack |
+| `make gate-karpenter` | `bazel run //:gate-karpenter` | gate-up, then `go test -tags gate ./test/gate/` (needs `go` on PATH); `GATE_KEEP=1` keeps the stack |
+| `make golden-update` | `bazel run //:golden-update` | copies `trace/gate/calls.golden` to `trace/golden/karpenter-calls.golden`; review the diff first |
 | `make gate-down` | `bazel run //:gate-down` | removes the gate and the S0 stack |
 | `make seed` | `bazel run //:seed` | build-linux first |
 | `make trace-show` | `bazel run //:trace-show` | |

@@ -87,6 +87,8 @@ filegroup(
         "s0-down",
         "gate-up",
         "gate-down",
+        "gate-karpenter",
+        "golden-update",
         "seed",
         "trace-show",
         "s0-probe",
