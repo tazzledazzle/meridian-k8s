@@ -19,6 +19,7 @@ go_test(
         "adversarial_test.go",
         "env_test.go",
         "modulepins_test.go",
+        "modulepins_tester_test.go",
         "versions_test.go",
     ],
     data = [

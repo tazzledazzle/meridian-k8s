@@ -15,3 +15,29 @@ py_test(
     env = {"PYTHONWARNINGS": "error"},
     main = "test_make_parity.py",
 )
+
+# Tester (meridian-17s.61): wrapper-versus-make behaviour with stub docker/k3d, and parity-test mutation checks.
+# Four tests are expectedFailure and document open defects; they flip to unexpected-success when fixed.
+py_test(
+    name = "test_wrapper_tester",
+    srcs = ["test_wrapper_tester.py"],
+    data = [
+        "//:BUILD.bazel",
+        "//:Makefile",
+        "//:docs/build/bazel.md",
+        "//:go_tree",
+        "//scripts:BUILD.bazel",
+        "//scripts:init-env.sh",
+        "//scripts:s0-run.sh",
+        "//scripts:test_profiles.py",
+        "//scripts:test_s0matrix.py",
+        "//scripts:test_s0matrix_adversarial.py",
+        "//scripts:test_s0run.py",
+        "//scripts:test_s0run_adversarial.py",
+        "//tools/make:BUILD.bazel",
+        "//tools/make:defs.bzl",
+        "//tools/make:meridian.sh",
+    ] + glob(["*.py"]),
+    env = {"PYTHONWARNINGS": "error"},
+    main = "test_wrapper_tester.py",
+)

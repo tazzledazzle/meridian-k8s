@@ -3,6 +3,7 @@ load(":defs.bzl", "CMDS", "linux_binaries", "make_target")
 
 exports_files([
     "meridian.sh",
+    "defs.bzl",
     "BUILD.bazel",
 ])
 
