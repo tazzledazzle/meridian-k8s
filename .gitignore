@@ -20,3 +20,4 @@ __pycache__/
 bazel-*
 user.bazelrc
 MODULE.bazel.lock.tmp
+.claude/worktrees/

@@ -186,7 +186,6 @@ class WrapperEdges(unittest.TestCase):
         self.assertNotEqual(0, r.returncode)  # 127 in practice: the exit 2 inside $(bin ..) is lost, the empty command fails
         self.assertIn("no tool", r.stderr)
 
-    @unittest.expectedFailure
     def test_defect_t_wrap_1_build_reports_success_when_a_copy_fails(self):
         """DEFECT T-WRAP-1 (High): copy_bins chains `cp && chmod && mv`; set -e ignores a failure that is not the
         last command of an && list, so `bazel run //:build` / `//:build-linux` exit 0 with 'wrote N binaries' even
@@ -231,7 +230,6 @@ class ParityTestIsWeak(unittest.TestCase):
     def test_removing_a_doc_row_is_caught(self):
         self.assertFalse(self.parity_passes_with("docs/build/bazel.md", lambda t: re.sub(r"^\| `make seed` .*$", "", t, flags=re.M)))
 
-    @unittest.expectedFailure
     def test_defect_t_par_1_commented_out_alias_still_counts(self):
         """DEFECT T-PAR-1 (Medium): target_names() matches quoted strings in comments, so commenting out an alias
         in //:BUILD.bazel (`# "trace-show",`) leaves the parity test green."""
@@ -239,7 +237,6 @@ class ParityTestIsWeak(unittest.TestCase):
             self.parity_passes_with("BUILD.bazel", lambda t: t.replace('        "trace-show",', '        # "trace-show",'))
         )
 
-    @unittest.expectedFailure
     def test_defect_t_par_2_prose_mention_satisfies_doc_check(self):
         """DEFECT T-PAR-2 (Low): the doc check is a substring test for `make T`; a prose mention elsewhere satisfies
         it after the table row is deleted."""
@@ -249,7 +246,6 @@ class ParityTestIsWeak(unittest.TestCase):
             )
         )
 
-    @unittest.expectedFailure
     def test_defect_t_par_3_second_phony_line_ignored(self):
         """DEFECT T-PAR-3 (Low): phony_targets() returns at the first .PHONY line; a target declared on a second
         .PHONY line is never required to have a Bazel counterpart."""

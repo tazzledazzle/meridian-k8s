@@ -64,9 +64,10 @@ is a separate step.
 The first build downloads Bazel itself, the Go SDK, Go modules, Python and the base image. After that:
 
 ```sh
-bazel fetch //...                                   # populate the repository cache while online
-bazel build //... --distdir=$HOME/.cache/bazel-dist --repository_cache=$HOME/.cache/bazel-repo
-bazel build //... --nofetch                         # after a fetch: fail instead of touching the network
+RC=$HOME/.cache/meridian-bazel-repo                 # any directory; pass the SAME one to fetch and build
+bazel fetch //... --repository_cache=$RC            # online, once
+bazel build //... --repository_cache=$RC --nofetch  # offline: fails instead of touching the network
+bazel test  //... --repository_cache=$RC --nofetch
 ```
 
 Put the flags you want in the (git-ignored) `user.bazelrc`. `go.sum` and `MODULE.bazel.lock` are committed;

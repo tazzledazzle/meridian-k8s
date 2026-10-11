@@ -171,7 +171,9 @@ func TestCancelDuringGraceExitsNonZeroAndKeepsTheInstance(t *testing.T) {
 	cancel()
 	select {
 	case r := <-done:
-		if r.code != 1 || !strings.Contains(r.err, "NOT terminated") || strings.Contains(r.out, "interrupted") {
+		// The cancel can land while SendMessage is still in flight ("deliver warning") or during the grace wait
+		// ("NOT terminated"); either way the exit is 1 and nothing is terminated (checked below).
+		if r.code != 1 || !(strings.Contains(r.err, "NOT terminated") || strings.Contains(r.err, "deliver warning")) || strings.Contains(r.out, "interrupted") {
 			t.Fatalf("exit %d out=%q err=%q", r.code, r.out, r.err)
 		}
 	case <-time.After(5 * time.Second):

@@ -21,14 +21,18 @@ def read(*parts):
 
 
 def phony_targets():
+    names = []
     for line in read("Makefile").splitlines():
         if line.startswith(".PHONY:"):
-            return line.split(":", 1)[1].split()
-    raise AssertionError("Makefile has no .PHONY line")
+            names += line.split(":", 1)[1].split()
+    if not names:
+        raise AssertionError("Makefile has no .PHONY line")
+    return names
 
 
 def target_names(build_text):
     """Names declared literally (name = "x") or by the alias comprehension `for t in [ "x", ... ]`."""
+    build_text = re.sub(r"#[^\n]*", "", build_text)  # commented-out targets do not count
     names = set(re.findall(r'\bname\s*=\s*"([^"]+)"', build_text))
     for body in re.findall(r"for t in \[(.*?)\]", build_text, re.S):
         names.update(re.findall(r'"([^"]+)"', body))
@@ -65,7 +69,7 @@ class MakeParity(unittest.TestCase):
 
     def test_documentation_table_lists_every_make_target(self):
         doc = read("docs", "build", "bazel.md")
-        missing = [t for t in phony_targets() if "`make %s`" % t not in doc]
+        missing = [t for t in phony_targets() if not re.search(r"^\|\s*`make %s`" % re.escape(t), doc, re.M)]
         self.assertEqual([], missing, "docs/build/bazel.md lacks a row for these make targets")
 
 

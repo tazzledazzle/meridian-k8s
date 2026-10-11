@@ -45,7 +45,10 @@ copy_bins() {
   mkdir -p "$dest"
   for p in $paths; do
     n="$(basename "$p")"; n="${n%_linux}"
-    cp -f "$RF/$p" "$dest/$n.tmp" && chmod 0755 "$dest/$n.tmp" && mv -f "$dest/$n.tmp" "$dest/$n"
+    # Separate commands: a failure inside an && list does not trip set -e.
+    cp -f "$RF/$p" "$dest/$n.tmp" || { echo "copy_bins: cannot copy $p to $dest/$n" >&2; exit 1; }
+    chmod 0755 "$dest/$n.tmp"
+    mv -f "$dest/$n.tmp" "$dest/$n"
   done
   echo "wrote $(echo $paths | wc -w | tr -d ' ') binaries to $dest/"
 }
