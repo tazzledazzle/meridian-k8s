@@ -77,6 +77,19 @@ py_test(
 )
 
 py_test(
+    name = "test_gate_precheck_adversarial",
+    srcs = ["test_gate_precheck_adversarial.py"],
+    data = [
+        "check-no-sock.sh",
+        "gate-check-offline.sh",
+        "gate-precheck.sh",
+        "images-load.sh",
+    ],
+    env = _PY_ERROR_ENV,
+    main = "test_gate_precheck_adversarial.py",
+)
+
+py_test(
     name = "test_s0matrix",
     srcs = ["test_s0matrix.py"],
     data = [
@@ -125,6 +138,7 @@ test_suite(
     name = "py_tests",
     tests = [
         ":test_gate_precheck",
+        ":test_gate_precheck_adversarial",
         ":test_localimg",
         ":test_profiles",
         ":test_s0matrix",
