@@ -240,6 +240,9 @@ func TestGate(t *testing.T) {
 		if err := r.kcJSON(&claims, "get", "nodeclaims", "-l", "karpenter.sh/nodepool=spot"); err != nil {
 			t.Fatal(err)
 		}
+		if first.Spec.ProviderID == "" {
+			t.Fatal("the spot Node has no providerID, so its NodeClaim cannot be identified")
+		}
 		claim := ""
 		for _, c := range claims.Items {
 			if c.Status.ProviderID == first.Spec.ProviderID {

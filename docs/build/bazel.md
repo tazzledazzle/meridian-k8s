@@ -20,8 +20,8 @@ Runnable targets are `bazel run //:<name> [-- args]`; they act on the real works
 | make | Bazel | Notes |
 |---|---|---|
 | `make init` | `bazel run //:init` | runs `scripts/init-env.sh .env` |
-| `make test` | `bazel test //:test` | same 22 packages as `go test ./...` (`bazel test //...` also runs them) |
-| `make test-scripts` | `bazel test //:test-scripts` | 7 `py_test` files; `PYTHONWARNINGS=error` mirrors `python3 -W error` |
+| `make test` | `bazel test //:test` | same 23 packages as `go test ./...` (`bazel test //...` also runs them) |
+| `make test-scripts` | `bazel test //:test-scripts` | 8 `py_test` files; `PYTHONWARNINGS=error` mirrors `python3 -W error` |
 | `make lint-versions` | `bazel test //:lint-versions` | `TestRepoVersionsFileIsValid` plus the MODULE.bazel pin check; `versions.yaml` is test data |
 | `make env-images` | `bazel run //:env-images` | atomically writes `.env.images`; `bazel build //:env_images_file` gives `bazel-bin/.env.images` |
 | `make build` | `bazel run //:build` | copies host binaries to `bin/` |

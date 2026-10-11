@@ -42,7 +42,7 @@ Scale to zero with `scripts/kc.sh scale deploy/inflate --replicas=0` and Karpent
 
 `make gate-up` builds the stack the gate test runs on. It differs from `make s0-up` in four ways:
 
-- The Docker network `meridian-gate` is `internal`: containers get no gateway, so nothing can leave it. No container publishes a port, and none mounts the Docker socket. Tools run as containers on the network, and `scripts/kc.sh` reaches Kubernetes through the k3s server container.
+- The Docker network `meridian-gate` is `internal`: containers get no gateway, so nothing can leave it. No container publishes a port, and none mounts the Docker socket. (k3d starts a helper container that does; `scripts/k3d-up.sh` removes it once the cluster is up, and the gate's audit fails if any container on the network holds a runtime socket.) Tools run as containers on the network, and `scripts/kc.sh` reaches Kubernetes through the k3s server container.
 - Every image is loaded before it is needed. Images in the manifests are pulled on the host, renamed to `meridian-local/...` and imported. The k3s system images (`deploy/images.system.txt`) are saved to `bin/images/system.tar` and mounted into the server, which imports them at startup. `scripts/gate-check-offline.sh` fails if any pod ever tried to pull.
 - The gateway runs in strict record mode: it records every call and rejects operations missing from `ops.yaml`.
 - `gate-up` always starts with `gate-down`, which also removes the S0 stack, so no state carries over. It first checks that Docker has at least 2048 MiB and 2 CPUs (`GATE_MIN_MEM_MB`, `GATE_MIN_CPUS`).

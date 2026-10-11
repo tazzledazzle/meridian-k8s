@@ -36,6 +36,13 @@ else
     --k3s-arg "--disable=servicelb@server:0" \
     --k3s-arg "--disable=metrics-server@server:0" \
     --wait
+  if docker network inspect "$NET" --format '{{.Internal}}' | grep -q true; then
+    # k3d starts a helper container (k3d-<cluster>-tools) that mounts the host's Docker socket, which is
+    # root-equivalent on the host's daemon. It is only needed while the cluster is created (host-IP discovery); images
+    # are imported with --mode direct, which does not use it. Remove it so nothing on the isolated network holds the
+    # socket (the gate's audit, C7, fails if any container does).
+    docker rm -f k3d-meridian-g0-tools >/dev/null
+  fi
 fi
 scripts/kc.sh wait --for=condition=Ready node --all --timeout=120s
 # Karpenter's chart spreads its pods across zones, which needs the zone label every EKS node carries and a bare k3s

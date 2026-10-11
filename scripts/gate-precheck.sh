@@ -8,6 +8,10 @@ MIN_MEM_MB="${GATE_MIN_MEM_MB:-2048}"
 MIN_CPUS="${GATE_MIN_CPUS:-2}"
 mem_bytes="${GATE_DOCKER_MEM_BYTES-$(docker info --format '{{.MemTotal}}')}"
 ncpu="${GATE_DOCKER_NCPU-$(docker info --format '{{.NCPU}}')}"
+# Digits only, and short enough that bash arithmetic cannot wrap or overflow (int64 holds 19 digits; 20 or more can wrap).
+for v in "$mem_bytes" "$ncpu" "$MIN_MEM_MB" "$MIN_CPUS"; do
+  case "$v" in ''|*[!0-9]*|????????????????????*) echo "FAIL: cannot read Docker's memory/CPU limits or a threshold (got '$v')" >&2; exit 1 ;; esac
+done
 case "$mem_bytes$ncpu$MIN_MEM_MB$MIN_CPUS" in *[!0-9]*|'') echo "FAIL: cannot read Docker's memory/CPU limits (got mem='$mem_bytes' cpu='$ncpu')" >&2; exit 1 ;; esac
 [ -n "$mem_bytes" ] && [ -n "$ncpu" ] || { echo "FAIL: cannot read Docker's memory/CPU limits" >&2; exit 1; }
 mem_mb=$((mem_bytes / 1024 / 1024))

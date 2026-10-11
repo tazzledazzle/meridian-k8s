@@ -3,6 +3,7 @@ package gatecheck
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -22,7 +23,28 @@ type ctrInspect struct {
 		Networks map[string]json.RawMessage             `json:"Networks"`
 		Ports    map[string][]struct{ HostPort string } `json:"Ports"`
 	} `json:"NetworkSettings"`
-	Mounts []struct{ Source string } `json:"Mounts"`
+	Mounts []struct{ Source, Destination string } `json:"Mounts"`
+}
+
+// exposesRuntime reports whether a mount path is a runtime socket (docker.sock, podman.sock, containerd.sock,
+// docker.proxy.sock, ... : anything ending in .sock) or, for a bind source, a directory that holds one. Each of
+// those is root-equivalent on the host's daemon. Destinations like /run are fine (tmpfs), so only sources are
+// checked for parent directories.
+func exposesRuntime(path string, isSource bool) bool {
+	if path == "" {
+		return false
+	}
+	p := filepath.Clean(path)
+	if strings.HasSuffix(p, ".sock") {
+		return true
+	}
+	if isSource {
+		switch p {
+		case "/", "/var", "/var/run", "/run":
+			return true
+		}
+	}
+	return false
 }
 
 // CheckNetwork audits the isolation of the gate stack from `docker network inspect` and `docker inspect <every
@@ -31,7 +53,8 @@ type ctrInspect struct {
 //   - every container on it is attached to that network ONLY (a second network could be a way out);
 //   - no container publishes a port to the host (Docker opened none), and none is even configured to publish on
 //     anything but loopback;
-//   - no container mounts a Docker socket (root-equivalent on the host's daemon);
+//   - no container mounts a container-runtime socket or a directory holding one (root-equivalent on the daemon);
+//   - every container is attached to the audited network (inconsistent inspect data is not accepted);
 //   - every container the network lists was inspected, so none escapes the audit.
 func CheckNetwork(network, networkJSON, containersJSON string) error {
 	var nets []netInspect
@@ -82,9 +105,12 @@ func CheckNetwork(network, networkJSON, containersJSON string) error {
 				problems = append(problems, fmt.Sprintf("container %s publishes %s to the host", name, port))
 			}
 		}
+		if _, attached := c.NetworkSettings.Networks[network]; !attached {
+			problems = append(problems, fmt.Sprintf("container %s is not attached to %s", name, network))
+		}
 		for _, m := range c.Mounts {
-			if strings.HasSuffix(m.Source, "docker.sock") {
-				problems = append(problems, fmt.Sprintf("container %s mounts the Docker socket (%s)", name, m.Source))
+			if exposesRuntime(m.Source, true) || exposesRuntime(m.Destination, false) {
+				problems = append(problems, fmt.Sprintf("container %s mounts a container-runtime socket or a directory holding one (docker.sock, %s -> %s)", name, m.Source, m.Destination))
 			}
 		}
 	}

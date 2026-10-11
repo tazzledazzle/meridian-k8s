@@ -83,6 +83,9 @@ func CheckInterruption(logs, nodeClaim string) (Interruption, error) {
 		}
 		if step == "deleted nodeclaim" {
 			res.InstanceID = lines[i].ProviderID[strings.LastIndex(lines[i].ProviderID, "/")+1:]
+			if res.InstanceID == "" {
+				return res, fmt.Errorf("the %q line for NodeClaim %s has no provider-id, so the terminated instance cannot be identified", step, nodeClaim)
+			}
 		}
 		prev = i
 	}

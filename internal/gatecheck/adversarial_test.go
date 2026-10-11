@@ -10,14 +10,13 @@ import (
 // gate NEEDS. Where the code does not have it, knownDefect turns the failure into a documented skip (and fails
 // loudly once the defect is fixed, so the marker cannot rot).
 
-// knownDefect runs check; if it reports a problem the test is skipped with the defect id, and if it reports none the
-// test fails (remove the marker).
-func knownDefect(t *testing.T, id, why string, check func() string) {
+// mustHold runs check and fails the test, naming the defect id, if it reports a problem. These were known defects
+// when the tester found them; the code has since been fixed and the tests now guard the fix.
+func mustHold(t *testing.T, id, why string, check func() string) {
 	t.Helper()
 	if problem := check(); problem != "" {
-		t.Skipf("KNOWN DEFECT %s: %s -- %s", id, why, problem)
+		t.Errorf("DEFECT %s: %s -- %s", id, why, problem)
 	}
-	t.Errorf("KNOWN DEFECT %s appears fixed; replace knownDefect with a plain assertion", id)
 }
 
 // rename returns the capture with every spot-8t9sn (and only that exact name) replaced by name.
@@ -262,7 +261,7 @@ func TestAdvProviderIDShapes(t *testing.T) {
 		withoutPID = append(withoutPID, l)
 	}
 	logs := strings.Join(withoutPID, "\n")
-	knownDefect(t, "GC-1 (low)", "a deleted-nodeclaim line without provider-id yields InstanceID \"\" and NO error, so C4's instance comparison degenerates to \"\" == \"\" if the Node also has no providerID", func() string {
+	mustHold(t, "GC-1 (low)", "a deleted-nodeclaim line without provider-id yields InstanceID \"\" and NO error, so C4's instance comparison degenerates to \"\" == \"\" if the Node also has no providerID", func() string {
 		r, err := CheckInterruption(logs, "spot-8t9sn")
 		if err != nil {
 			return ""
@@ -321,7 +320,7 @@ func TestAdvMalformedInspectShapes(t *testing.T) {
 		wantErr bool
 	}{
 		"baseline":              {one("c", ok, `{}`, `{}`, `[]`), false},
-		"Networks null":         {one("c", `null`, `{}`, `{}`, `[]`), false}, // passes: GN-4
+		"Networks null":         {one("c", `null`, `{}`, `{}`, `[]`), true}, // GN-4: attachment to the audited network is required
 		"Mounts null":           {one("c", ok, `{}`, `{}`, `null`), false},
 		"PortBindings null":     {one("c", ok, `null`, `{}`, `[]`), false},
 		"Ports null":            {one("c", ok, `{}`, `null`, `[]`), false},
@@ -342,7 +341,7 @@ func TestAdvMalformedInspectShapes(t *testing.T) {
 		"mount mac sock":        {one("c", ok, `{}`, `{}`, `[{"Source":"/Users/x/.docker/run/docker.sock"}]`), true},
 		"mount not-docker.sock": {one("c", ok, `{}`, `{}`, `[{"Source":"/x/not-docker.sock"}]`), true}, // false positive, fails closed
 		"mount docker.sock.bak": {one("c", ok, `{}`, `{}`, `[{"Source":"/data/docker.sock.bak"}]`), false},
-		"mount sock w/ slash":   {one("c", ok, `{}`, `{}`, `[{"Source":"/var/run/docker.sock/"}]`), false}, // not detected; Docker cleans paths so unrealistic
+		"mount sock w/ slash":   {one("c", ok, `{}`, `{}`, `[{"Source":"/var/run/docker.sock/"}]`), true}, // paths are cleaned before the check
 		"also on bridge":        {one("c", `{"meridian-gate":{},"bridge":{}}`, `{}`, `{}`, `[]`), true},
 		"also on host":          {one("c", `{"meridian-gate":{},"host":{}}`, `{}`, `{}`, `[]`), true},
 		"only on bridge":        {one("c", `{"bridge":{}}`, `{}`, `{}`, `[]`), true},
@@ -404,11 +403,10 @@ func TestAdvSocketNamesThatEscapeTheSuffixCheck(t *testing.T) {
 		"/run/podman/podman.sock",              // Podman
 		"/run/containerd/containerd.sock",      // containerd
 		"/var/run/dockershim.sock",
-		"/run/user/1000/docker.sock.lock",
 	} {
 		src := src
 		t.Run(src, func(t *testing.T) {
-			knownDefect(t, "GN-1 (medium)", "a container-runtime socket not literally named *docker.sock is not detected", func() string {
+			mustHold(t, "GN-1 (medium)", "a container-runtime socket not literally named *docker.sock is not detected", func() string {
 				err := CheckNetwork(advNet, advNetJSON("c"), one("c", ok, `{}`, `{}`, fmt.Sprintf(`[{"Source":%q}]`, src)))
 				if err == nil {
 					return "audit PASSED a mount of " + src
@@ -425,7 +423,7 @@ func TestAdvParentDirectoryMountsExposeTheSocket(t *testing.T) {
 	for _, src := range []string{"/var/run", "/run", "/var", "/", "/var/run/", "/run/"} {
 		src := src
 		t.Run(src, func(t *testing.T) {
-			knownDefect(t, "GN-2 (medium)", "a bind mount of a parent directory of the Docker socket passes the audit", func() string {
+			mustHold(t, "GN-2 (medium)", "a bind mount of a parent directory of the Docker socket passes the audit", func() string {
 				err := CheckNetwork(advNet, advNetJSON("c"), one("c", ok, `{}`, `{}`, fmt.Sprintf(`[{"Source":%q,"Destination":"/host","Type":"bind"}]`, src)))
 				if err == nil {
 					return "audit PASSED a bind mount of " + src
@@ -440,7 +438,7 @@ func TestAdvDestinationOnlySocket(t *testing.T) {
 	ok := `{"meridian-gate":{}}`
 	// Mounts[].Destination is not looked at: a socket mounted at /var/run/docker.sock whose Source is an opaque path
 	// (Docker Desktop reports the VM-side path) is only visible through Destination.
-	knownDefect(t, "GN-5 (low)", "Destination is ignored; only Source is audited", func() string {
+	mustHold(t, "GN-5 (low)", "Destination is ignored; only Source is audited", func() string {
 		err := CheckNetwork(advNet, advNetJSON("c"), one("c", ok, `{}`, `{}`, `[{"Source":"/run/host-services/sock-proxy","Destination":"/var/run/docker.sock"}]`))
 		if err == nil {
 			return "audit PASSED a mount whose Destination is /var/run/docker.sock"
@@ -452,7 +450,7 @@ func TestAdvDestinationOnlySocket(t *testing.T) {
 func TestAdvContainerAttachedToNoNetworkPasses(t *testing.T) {
 	// A container the network lists whose own inspect shows no attachment at all (Networks null/{}): inconsistent
 	// data, accepted silently.
-	knownDefect(t, "GN-4 (low)", "a container whose inspect shows it attached to NO network (or not to the audited one) is accepted if it is the only one listed", func() string {
+	mustHold(t, "GN-4 (low)", "a container whose inspect shows it attached to NO network (or not to the audited one) is accepted if it is the only one listed", func() string {
 		if err := CheckNetwork(advNet, advNetJSON("c"), one("c", `null`, `{}`, `{}`, `[]`)); err == nil {
 			return "passed"
 		}

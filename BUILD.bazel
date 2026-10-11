@@ -40,6 +40,7 @@ filegroup(
         "//internal/catalog:gosrcs",
         "//internal/ec2sim:gosrcs",
         "//internal/fakeec2:gosrcs",
+        "//internal/gatecheck:gosrcs",
         "//internal/gateway:gosrcs",
         "//internal/noderegistrar:gosrcs",
         "//internal/ops:gosrcs",
@@ -100,7 +101,7 @@ filegroup(
     ]
 ]
 
-# make test: every Go package (same 22 packages as `go test ./...`). `bazel test //...` also runs them.
+# make test: every Go package (same 23 packages as `go test ./...`). `bazel test //...` also runs them.
 test_suite(
     name = "test",
     tests = [
@@ -116,6 +117,7 @@ test_suite(
         "//internal/catalog:catalog_test",
         "//internal/ec2sim:ec2sim_test",
         "//internal/fakeec2:fakeec2_test",
+        "//internal/gatecheck:gatecheck_test",
         "//internal/gateway:gateway_test",
         "//internal/noderegistrar:noderegistrar_test",
         "//internal/ops:ops_test",

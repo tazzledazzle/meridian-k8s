@@ -14,6 +14,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tazzledazzle/meridian/internal/gatecheck"
 )
 
 const (
@@ -247,7 +249,11 @@ func simctlProbe(r *rig, networkArg, url string) (bool, string, error) {
 		return true, strings.TrimSpace(out), nil
 	}
 	if strings.Contains(out, "unreachable:") {
-		return false, strings.TrimSpace(out), nil
+		if gatecheck.NoRoute(out) {
+			return false, strings.TrimSpace(out), nil
+		}
+		// "Unreachable" for another reason (refused, TLS, EOF) means a peer answered or the client is broken.
+		return false, out, fmt.Errorf("probe failed for a reason that is not a missing route: %s", strings.TrimSpace(out))
 	}
 	return false, out, err // the probe itself failed to run: not evidence of anything
 }
@@ -284,7 +290,10 @@ var vantages = []vantage{
 		case "0":
 			return true, strings.TrimSpace(logs), nil
 		case "1":
-			return false, strings.TrimSpace(logs), nil
+			if gatecheck.NoRoute(logs) {
+				return false, strings.TrimSpace(logs), nil
+			}
+			return false, logs, fmt.Errorf("probe failed for a reason that is not a missing route: %s", strings.TrimSpace(logs))
 		}
 		return false, logs, fmt.Errorf("probe container did not finish (exit code %q)", code)
 	}},
@@ -296,8 +305,7 @@ var vantages = []vantage{
 		if err == nil || strings.Contains(out, "HTTP/") || strings.Contains(out, "server returned error") {
 			return true, strings.TrimSpace(out), nil
 		}
-		if strings.Contains(out, "Network is unreachable") || strings.Contains(out, "Host is unreachable") ||
-			strings.Contains(out, "bad address") || strings.Contains(out, "download timed out") || strings.Contains(out, "can't connect") {
+		if gatecheck.NoRoute(out) {
 			return false, strings.TrimSpace(out), nil
 		}
 		return false, out, err

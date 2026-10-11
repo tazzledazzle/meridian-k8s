@@ -80,13 +80,11 @@ class PrecheckEnvEdgeCases(unittest.TestCase):
     def test_int64_max_is_accepted_as_a_big_machine(self):
         self.assertEqual(0, precheck(2 ** 63 - 1, 4).returncode)
 
-    @unittest.expectedFailure
     def test_F_P1_mem_value_that_wraps_around_to_a_plausible_size_is_accepted(self):
         # FINDING P1 (low, unrealistic input): 2**64 + 8 GiB wraps to 8 GiB in $(( )) and passes. A daemon never
         # reports this; it shows the digit-only check is not a magnitude check.
         self.assertRejected(precheck(2 ** 64 + 8 * GIB, 4))
 
-    @unittest.expectedFailure
     def test_F_P2_an_over_int64_floor_override_disables_the_check(self):
         # FINDING P2 (low): `[ 8192 -lt 99999999999999999999 ]` is an error (status 2), `if` treats it as false, so a
         # nonsense floor makes the guard pass instead of fail. Also prints a stray bash error. Fail-open on bad input.
@@ -166,7 +164,6 @@ class OfflineCheck(unittest.TestCase):
             self.assertEqual(1, r.returncode, ev)
             self.assertIn("tried to pull", r.stderr)
 
-    @unittest.expectedFailure
     def test_F_O1_an_unreachable_cluster_is_reported_as_no_pull_attempted(self):
         # FINDING O1 (medium): `events=$(kc get events ... | grep ... || true)` swallows a kubectl failure, so when
         # the cluster cannot be queried the script prints "ok: no image pull was attempted" and exits 0.
@@ -193,14 +190,12 @@ class NoSockCheck(unittest.TestCase):
         r = self.rendered("volumes:\n  - type: bind\n    source: /var/run/docker.sock\n    target: /s")
         self.assertEqual(1, r.returncode)
 
-    @unittest.expectedFailure
     def test_F_N1_parent_directory_bind_exposes_the_socket_but_passes(self):
         # FINDING N1 (medium, same class as Go finding GN-2): a bind of /var/run or /run contains docker.sock, but
         # the rendered config never spells "docker.sock", so the A1 grep passes it.
         r = self.rendered("services:\n  a:\n    volumes:\n      - /var/run:/host-run")
         self.assertEqual(1, r.returncode)
 
-    @unittest.expectedFailure
     def test_F_N2_other_runtime_sockets_pass(self):
         r = self.rendered("services:\n  a:\n    volumes:\n      - /run/podman/podman.sock:/s\n      - /run/containerd/containerd.sock:/c")
         self.assertEqual(1, r.returncode)
@@ -215,7 +210,6 @@ class NoSockCheck(unittest.TestCase):
 
 
 class ImagesLoad(unittest.TestCase):
-    @unittest.expectedFailure
     def test_F_I1_a_failing_manifest_lister_loads_nothing_and_still_succeeds(self):
         # FINDING I1 (low, caught later by rollout status/offline check): the loop reads from a process
         # substitution `< <(... localimg.py list)`; set -e does not see that command's failure, so when the lister
