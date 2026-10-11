@@ -26,6 +26,13 @@ py_library(
     visibility = ["//visibility:public"],
 )
 
+py_library(
+    name = "localimg",
+    srcs = ["localimg.py"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+)
+
 # The scripts' Python entry points, run hermetically by //tools/make (s0-up, s0-decide).
 py_binary(
     name = "profiles_tool",
@@ -51,6 +58,22 @@ py_test(
     env = _PY_ERROR_ENV,
     main = "test_profiles.py",
     deps = [":profiles"],
+)
+
+py_test(
+    name = "test_localimg",
+    srcs = ["test_localimg.py"],
+    env = _PY_ERROR_ENV,
+    main = "test_localimg.py",
+    deps = [":localimg"],
+)
+
+py_test(
+    name = "test_gate_precheck",
+    srcs = ["test_gate_precheck.py"],
+    data = ["gate-precheck.sh"],
+    env = _PY_ERROR_ENV,
+    main = "test_gate_precheck.py",
 )
 
 py_test(
@@ -101,6 +124,8 @@ py_test(
 test_suite(
     name = "py_tests",
     tests = [
+        ":test_gate_precheck",
+        ":test_localimg",
         ":test_profiles",
         ":test_s0matrix",
         ":test_s0matrix_adversarial",
@@ -126,8 +151,18 @@ test_suite(
             "kc",
             "//:deploy_files",
         ],
+        "gate-check-offline": ["kc"],
+        "gate-down": [],
+        "gate-precheck": [],
+        "gate-up": [
+            "kc",
+            "//:deploy_files",
+        ],
+        "images-load": ["//:deploy_files"],
+        "images-save-system": ["//:deploy_files"],
         "init-env": [],
-        "k3d-up": [],
+        "install-k3d": [],
+        "k3d-up": ["//:deploy_files"],
         "karpenter-install": [
             "kc",
             "//:deploy_files",

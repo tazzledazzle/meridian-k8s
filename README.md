@@ -79,6 +79,8 @@ make deploy-registrar  # needs Docker: build and deploy node-registrar
 make s0-probe        # needs Docker: run the contract probe, write docs/s0/report.{md,json}
 make s0-decide       # print the per-operation backend decision (no Docker)
 make s0-down         # needs Docker: delete the cluster and the stack
+make gate-up         # needs Docker: the isolated gate stack (internal network, no published ports, preloaded images)
+make gate-down       # removes the gate and the S0 stack
 ```
 
 `make s0-up` does not install `k3d` for you. The workloads that exercise Karpenter are in [deploy/workloads/](deploy/workloads/); [docs/s0/criterion3.md](docs/s0/criterion3.md) shows the manual run.

@@ -92,6 +92,9 @@ case "$target" in
     [ ! -e docs/s0/report-moto.json ] || reports+=(--report moto=docs/s0/report-moto.json)
     "$(bin s0matrix)" "${reports[@]}" ops.yaml ${apply[@]+"${apply[@]}"}
     ;;
+  # gate-up.sh calls make for init/env-images/build-linux unless told they are done; here the dispatcher did them.
+  gate-up)    step_init; step_env_images; step_build_linux; MERIDIAN_PREBUILT=1 "$(bin gate_up)" ;;
+  gate-down)  "$(bin gate_down)" ;;
   kwok-up)    step_env_images; "$(bin kwok_up)" ;;
   vendor-kwok) step_env_images; "$(bin vendor_kwok)" ;;
   deploy-registrar) step_init; step_env_images; "$(bin deploy_registrar)" ;;

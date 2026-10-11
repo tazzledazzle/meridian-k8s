@@ -38,6 +38,19 @@ scripts/kc.sh get nodeclaims,nodes
 
 Scale to zero with `scripts/kc.sh scale deploy/inflate --replicas=0` and Karpenter removes the Node ([[Nodes Without Machines]]).
 
+## The isolated gate stack
+
+`make gate-up` builds the stack the gate test runs on. It differs from `make s0-up` in four ways:
+
+- The Docker network `meridian-gate` is `internal`: containers get no gateway, so nothing can leave it. No container publishes a port, and none mounts the Docker socket. Tools run as containers on the network, and `scripts/kc.sh` reaches Kubernetes through the k3s server container.
+- Every image is loaded before it is needed. Images in the manifests are pulled on the host, renamed to `meridian-local/...` and imported. The k3s system images (`deploy/images.system.txt`) are saved to `bin/images/system.tar` and mounted into the server, which imports them at startup. `scripts/gate-check-offline.sh` fails if any pod ever tried to pull.
+- The gateway runs in strict record mode: it records every call and rejects operations missing from `ops.yaml`.
+- `gate-up` always starts with `gate-down`, which also removes the S0 stack, so no state carries over. It first checks that Docker has at least 2048 MiB and 2 CPUs (`GATE_MIN_MEM_MB`, `GATE_MIN_CPUS`).
+
+An internal network has no default route, and k3s refuses to start without one. `deploy/k3d-entrypoint-route.sh` adds a route through the interface alone. It opens no path out; the network still has nowhere to send packets.
+
+The cluster gets two NodePools, `ondemand` (`c5.large`, `m5.large`) and `spot` (`m5.large`), each capped at 10 CPUs. The `inflate-ondemand` and `inflate-spot` Deployments start at zero replicas.
+
 ## Troubleshooting
 
 Each entry was seen during the S0 runs.

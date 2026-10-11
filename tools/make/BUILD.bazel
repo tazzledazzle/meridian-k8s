@@ -74,6 +74,21 @@ make_target(
 make_target(name = "s0-down")
 
 make_target(
+    name = "gate-up",
+    bin_sets = {"LINUX_BINS": ":linux_bins"},
+    tools = {
+        "gate_up": "//scripts:gate-up",
+        "init_env": "//scripts:init-env",
+        "versionsenv": ":versionsenv_host",
+    },
+)
+
+make_target(
+    name = "gate-down",
+    tools = {"gate_down": "//scripts:gate-down"},
+)
+
+make_target(
     name = "seed",
     bin_sets = {"LINUX_BINS": ":linux_bins"},
     tools = {"seed_floci": "//scripts:seed-floci"},

@@ -1,0 +1,5 @@
+# The command-line tools the gate runs on the isolated network: awscall, simctl and s0probe.
+# Build context is bin/linux (static Linux binaries from `make build-linux`).
+ARG STATIC_IMAGE
+FROM ${STATIC_IMAGE}
+COPY awscall simctl s0probe /usr/local/bin/

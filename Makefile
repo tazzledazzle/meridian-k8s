@@ -1,5 +1,5 @@
 # Every target below also exists in Bazel: `bazel run //:<target>` (tests: `bazel test //:<target>`). See docs/build/bazel.md.
-.PHONY: kwok-up vendor-kwok deploy-registrar init test test-scripts lint-versions env-images build build-linux s0-up s0-down seed trace-show check-sock s0-probe s0-probe-moto s0-decide
+.PHONY: gate-up gate-down kwok-up vendor-kwok deploy-registrar init test test-scripts lint-versions env-images build build-linux s0-up s0-down seed trace-show check-sock s0-probe s0-probe-moto s0-decide
 
 # Generates local credentials; safe to run repeatedly.
 init:
@@ -83,3 +83,11 @@ vendor-kwok: env-images
 # Builds node-registrar, imports it into the k3d cluster and applies its manifest (idempotent).
 deploy-registrar: init env-images
 	./scripts/deploy-registrar.sh
+
+# The isolated gate stack (Task 15): a Docker network with no route out, no published ports, preloaded images.
+gate-up:
+	./scripts/gate-up.sh
+
+# Removes the gate AND the S0 stack (cluster, Compose projects, networks), so no state is inherited.
+gate-down:
+	./scripts/gate-down.sh

@@ -14,15 +14,26 @@ docker network inspect "$NET" >/dev/null 2>&1 || { echo "network '$NET' missing:
 if k3d cluster list meridian-g0 >/dev/null 2>&1; then
   echo "cluster meridian-g0 already exists"
 else
-  # --no-lb: no load balancer container. --api-port: k3d still publishes the API server on the host, and its default
-  # is every interface (0.0.0.0), so bind it to loopback. --network: shares the Compose network.
+  # --no-lb: no load balancer container. --network: shares the Compose network.
   # traefik, servicelb and metrics-server are unused by G0; disabling them also shortens the offline image list.
+  EXTRA=()
+  if docker network inspect "$NET" --format '{{.Internal}}' | grep -q true; then
+    # The gate network is internal: Docker publishes no ports on it (so no --api-port; kubectl goes through
+    # scripts/kc.sh) and gives containers no gateway, so k3s needs the in-container default route.
+    EXTRA+=(--volume "$PWD/deploy/k3d-entrypoint-route.sh:/bin/k3d-entrypoint-route.sh@server:0")
+    # k3s imports tarballs from this directory at startup: the system images are there before any pod is scheduled.
+    [ -f bin/images/system.tar ] || { echo "bin/images/system.tar missing: run scripts/images-save-system.sh first"; exit 1; }
+    EXTRA+=(--volume "$PWD/bin/images/system.tar:/var/lib/rancher/k3s/agent/images/system.tar@server:0")
+  else
+    # k3d publishes the API server on the host, by default on every interface (0.0.0.0): bind it to loopback.
+    EXTRA+=(--api-port 127.0.0.1:0)
+  fi
   k3d cluster create meridian-g0 \
     --image "${K3S_IMAGE}" \
     --network "$NET" \
     --servers 1 --agents 0 \
     --no-lb \
-    --api-port 127.0.0.1:0 \
+    "${EXTRA[@]}" \
     --k3s-arg "--disable=traefik@server:0" \
     --k3s-arg "--disable=servicelb@server:0" \
     --k3s-arg "--disable=metrics-server@server:0" \

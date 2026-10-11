@@ -21,7 +21,7 @@ Runnable targets are `bazel run //:<name> [-- args]`; they act on the real works
 |---|---|---|
 | `make init` | `bazel run //:init` | runs `scripts/init-env.sh .env` |
 | `make test` | `bazel test //:test` | same 22 packages as `go test ./...` (`bazel test //...` also runs them) |
-| `make test-scripts` | `bazel test //:test-scripts` | 5 `py_test` files; `PYTHONWARNINGS=error` mirrors `python3 -W error` |
+| `make test-scripts` | `bazel test //:test-scripts` | 7 `py_test` files; `PYTHONWARNINGS=error` mirrors `python3 -W error` |
 | `make lint-versions` | `bazel test //:lint-versions` | `TestRepoVersionsFileIsValid` plus the MODULE.bazel pin check; `versions.yaml` is test data |
 | `make env-images` | `bazel run //:env-images` | atomically writes `.env.images`; `bazel build //:env_images_file` gives `bazel-bin/.env.images` |
 | `make build` | `bazel run //:build` | copies host binaries to `bin/` |
@@ -29,6 +29,8 @@ Runnable targets are `bazel run //:<name> [-- args]`; they act on the real works
 | `make check-sock` | `bazel run //:check-sock` | |
 | `make s0-up` | `bazel run //:s0-up` | init, env-images, build-linux, check-sock, then compose up, seed, k3d-up, karpenter-install |
 | `make s0-down` | `bazel run //:s0-down` | |
+| `make gate-up` | `bazel run //:gate-up` | init, env-images, build-linux first; tears down S0 and the old gate, then builds the isolated stack |
+| `make gate-down` | `bazel run //:gate-down` | removes the gate and the S0 stack |
 | `make seed` | `bazel run //:seed` | build-linux first |
 | `make trace-show` | `bazel run //:trace-show` | |
 | `make s0-probe` | `bazel run //:s0-probe` | build-linux first |
@@ -45,7 +47,8 @@ runnable target above, as the Makefile exports them. As in the Makefile, a syste
 ### Every script is a `sh_binary`
 
 `bazel run //scripts:<name> -- args` for `init-env`, `check-no-sock`, `seed-floci`, `k3d-up`,
-`karpenter-install`, `kc`, `kwok-up`, `vendor-kwok`, `deploy-registrar`, `trace-show`, `s0-run`. Running one
+`karpenter-install`, `kc`, `kwok-up`, `vendor-kwok`, `deploy-registrar`, `trace-show`, `s0-run`, `gate-up`,
+`gate-down`, `gate-precheck`, `gate-check-offline`, `images-load`, `images-save-system`, `install-k3d`. Running one
 directly skips the dispatcher's environment (PATH, UID/GID); prefer the `//:` targets for the docker/k3d ones.
 `profiles.py` and `s0matrix.py` are `py_library` (tests) and `py_binary` (`//scripts:profiles_tool`,
 `//scripts:s0matrix_tool`, used by `s0-up` and `s0-decide`). `bazel query 'kind(sh_binary, //...)'` lists them.

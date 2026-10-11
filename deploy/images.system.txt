@@ -1,0 +1,7 @@
+# Images k3s itself needs. The gate cluster has no route to a registry, so images-load.sh pulls these on the host and
+# imports them under these exact names. Discovered with `crictl images` on a running S0 cluster (Task 15, Step 5);
+# traefik, servicelb and metrics-server are disabled in k3d-up.sh, so they are not listed.
+# Every entry is a pinned tag, never `latest`. k3s v1.35.9-k3s1.
+docker.io/rancher/mirrored-pause:3.10.2
+docker.io/rancher/mirrored-coredns-coredns:1.14.7
+docker.io/rancher/local-path-provisioner:v0.0.37

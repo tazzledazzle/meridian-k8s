@@ -85,6 +85,8 @@ filegroup(
         "check-sock",
         "s0-up",
         "s0-down",
+        "gate-up",
+        "gate-down",
         "seed",
         "trace-show",
         "s0-probe",

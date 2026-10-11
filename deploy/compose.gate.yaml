@@ -1,0 +1,100 @@
+# Gate stack: the S0 services on a Docker network with NO route out, no published ports, and the gateway in strict
+# record mode (unsupported operations are rejected, not forwarded). Run through scripts/gate-up.sh, which sets
+# COMPOSE_PROFILES from ops.yaml. Tools and tests run as containers on this network, because on an internal network
+# nothing on the host can reach a service either.
+name: meridian-gate
+
+networks:
+  meridian:
+    name: meridian-gate       # k3d joins this network so pods can resolve "aws-gateway"
+    internal: true            # Docker gives containers on this network no gateway, so nothing can leave it
+
+services:
+  floci:
+    image: ${FLOCI_IMAGE}     # pinned by digest in versions.yaml
+    networks: [meridian]
+    environment:
+      FLOCI_DEFAULT_REGION: us-west-2     # the region Karpenter is configured for
+      FLOCI_HOSTNAME: floci               # URLs Floci returns (SQS QueueUrl) must resolve from other containers
+      # Metadata-only mode (no Docker) for the two services that otherwise launch containers. Without these Floci
+      # retries the missing Docker socket and an EKS CreateCluster hangs (observed in Task 8). KWOK supplies the nodes.
+      FLOCI_SERVICES_EC2_MOCK: "true"
+      FLOCI_SERVICES_EKS_MOCK: "true"
+    # No Docker socket (handoff A1, Task 0 smoke test): Floci serves CreateFleet and DescribeInstances without
+    # launching containers, so it gets no access to the host's Docker daemon. scripts/check-no-sock.sh enforces this.
+    # No published port: only the gateway (and the seeding helper on this network) can reach Floci.
+    expose: ["4566"]
+
+  aws-gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args:
+        CMD: aws-gateway
+        GOLANG_IMAGE: ${GOLANG_IMAGE}
+        STATIC_IMAGE: ${STATIC_IMAGE}
+    networks: [meridian]
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?run make init}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?run make init}
+    command:
+      - -listen=0.0.0.0:4566
+      - -allow-any-interface          # needed inside a container; nothing is published
+      - -ops=/ops.yaml
+      - -record                       # records every call for the golden comparison; rejects unsupported operations
+      - -trace-out=/trace
+      # Every backend name ops.yaml can use is declared here. Backends that are not running are never
+      # dialed; only the profiles named by `scripts/profiles.py ops.yaml` are started.
+      - -backend=floci=http://floci:4566
+      - -backend=ec2-sim=http://ec2-sim:4570
+      - -backend=pricing-facade=http://pricing-facade:4571
+      - -backend=eks-facade=http://eks-facade:4572
+      - -backend=moto=http://moto:5000
+    # No ports: on an internal network nothing on the host can reach the gateway.
+    volumes:
+      - ../trace/gate:/trace           # the recorded call list lands here
+    # Runs as the invoking user (not root) so it can write the bind-mounted trace directory; make exports these.
+    user: "${MERIDIAN_UID:?use make}:${MERIDIAN_GID:?use make}"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on: [floci]
+
+  # ---- Fallback backends: each starts only if S0 moved operations to it (profile name = backend name) ----
+  ec2-sim:
+    profiles: [ec2-sim]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: {CMD: ec2-sim, GOLANG_IMAGE: "${GOLANG_IMAGE}", STATIC_IMAGE: "${STATIC_IMAGE}"}
+    networks: [meridian]
+    command: ["-listen=0.0.0.0:4570", "-allow-any-interface"]
+    expose: ["4570"]            # internal only: the simulator trusts the gateway, so it is never published
+
+  pricing-facade:
+    profiles: [pricing-facade]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: {CMD: pricing-facade, GOLANG_IMAGE: "${GOLANG_IMAGE}", STATIC_IMAGE: "${STATIC_IMAGE}"}
+    networks: [meridian]
+    command: ["-listen=0.0.0.0:4571", "-allow-any-interface"]
+    expose: ["4571"]
+
+  eks-facade:
+    profiles: [eks-facade]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: {CMD: eks-facade, GOLANG_IMAGE: "${GOLANG_IMAGE}", STATIC_IMAGE: "${STATIC_IMAGE}"}
+    networks: [meridian]
+    command: ["-listen=0.0.0.0:4572", "-allow-any-interface", "-cluster-name=meridian-g0"]
+    environment:
+      K3S_VERSION: ${K3S_VERSION:-}     # the reported EKS version is derived from the pinned k3s
+    expose: ["4572"]
+
+  moto:
+    profiles: [moto]
+    image: ${MOTO_IMAGE:-moto-not-pinned}   # only started via the moto profile, once versions.yaml pins moto (Task 14)
+    networks: [meridian]
+    expose: ["5000"]
