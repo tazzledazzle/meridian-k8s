@@ -3,4 +3,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_test")
 go_test(
     name = "initenv_test",
     srcs = ["initenv_test.go"],
+    data = [
+        "//:.gitignore",
+        "//scripts:init-env.sh",
+    ],
+)
+
+# Plain sources, for the tests that run `go build` / `make` in a copy of the tree.
+filegroup(
+    name = "gosrcs",
+    srcs = glob(["*.go"]),
+    visibility = ["//:__pkg__"],
 )

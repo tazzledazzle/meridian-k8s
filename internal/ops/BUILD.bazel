@@ -15,4 +15,12 @@ go_test(
     name = "ops_test",
     srcs = ["ops_test.go"],
     embed = [":ops"],
+    data = ["//:ops.yaml"],
+)
+
+# Plain sources, for the tests that run `go build` / `make` in a copy of the tree.
+filegroup(
+    name = "gosrcs",
+    srcs = glob(["*.go"]),
+    visibility = ["//:__pkg__"],
 )

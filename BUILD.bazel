@@ -2,3 +2,48 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix github.com/tazzledazzle/meridian
 gazelle(name = "gazelle")
+
+exports_files([
+    ".gitignore",
+    "go.mod",
+    "go.sum",
+    "Makefile",
+    "ops.yaml",
+    "versions.yaml",
+], visibility = ["//visibility:public"])
+
+# Every Go source in the repo plus the files `make` needs, for tests that copy the tree and run go/make.
+filegroup(
+    name = "go_tree",
+    visibility = ["//visibility:public"],
+    srcs = [
+        "Makefile",
+        "go.mod",
+        "go.sum",
+        "ops.yaml",
+        "versions.yaml",
+        "//cmd/aws-gateway:gosrcs",
+        "//cmd/awscall:gosrcs",
+        "//cmd/ec2-sim:gosrcs",
+        "//cmd/node-registrar:gosrcs",
+        "//cmd/pricing-facade:gosrcs",
+        "//cmd/s0probe:gosrcs",
+        "//cmd/simctl:gosrcs",
+        "//cmd/versionsenv:gosrcs",
+        "//internal/awsapi:gosrcs",
+        "//internal/awscall:gosrcs",
+        "//internal/catalog:gosrcs",
+        "//internal/ec2sim:gosrcs",
+        "//internal/fakeec2:gosrcs",
+        "//internal/gateway:gosrcs",
+        "//internal/noderegistrar:gosrcs",
+        "//internal/ops:gosrcs",
+        "//internal/pricingfacade:gosrcs",
+        "//internal/s0probe:gosrcs",
+        "//internal/simctl:gosrcs",
+        "//internal/spot:gosrcs",
+        "//internal/trace:gosrcs",
+        "//internal/versions:gosrcs",
+        "//test/initenv:gosrcs",
+    ],
+)

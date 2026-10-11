@@ -25,3 +25,10 @@ go_test(
     ],
     embed = [":pricing-facade_lib"],
 )
+
+# Plain sources, for the tests that run `go build` / `make` in a copy of the tree.
+filegroup(
+    name = "gosrcs",
+    srcs = glob(["*.go"]),
+    visibility = ["//:__pkg__"],
+)
