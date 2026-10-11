@@ -1,0 +1,9 @@
+# Meridian Bazel settings. Offline use: see docs/build/bazel.md.
+common --enable_bzlmod
+build --incompatible_strict_action_env
+build --workspace_status_command=
+test --test_output=errors
+# Hermetic tests do not see the host PATH beyond the basics; script tests that need bash/openssl get it here.
+test --test_env=PATH
+# Optional per-user overrides (distdir, repository cache, ...).
+try-import %workspace%/user.bazelrc

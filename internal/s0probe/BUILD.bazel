@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "s0probe",
+    srcs = [
+        "checks.go",
+        "prices.go",
+        "probe.go",
+        "report.go",
+        "xmltree.go",
+    ],
+    importpath = "github.com/tazzledazzle/meridian/internal/s0probe",
+    visibility = ["//:__subpackages__"],
+    deps = ["//internal/awscall"],
+)
+
+go_test(
+    name = "s0probe_test",
+    srcs = [
+        "adversarial_test.go",
+        "checks_test.go",
+        "fake_test.go",
+        "fuzz_test.go",
+        "gateway_test.go",
+        "prices_test.go",
+        "probe_test.go",
+        "xmltree_test.go",
+    ],
+    embed = [":s0probe"],
+    deps = [
+        "//internal/gateway",
+        "//internal/ops",
+    ],
+)

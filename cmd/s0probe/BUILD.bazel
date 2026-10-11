@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "s0probe_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tazzledazzle/meridian/cmd/s0probe",
+    visibility = ["//visibility:private"],
+    deps = ["//internal/s0probe"],
+)
+
+go_binary(
+    name = "s0probe",
+    embed = [":s0probe_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "s0probe_test",
+    srcs = [
+        "adversarial_test.go",
+        "main_test.go",
+    ],
+    embed = [":s0probe_lib"],
+)

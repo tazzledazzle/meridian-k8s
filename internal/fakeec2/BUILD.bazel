@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "fakeec2",
+    srcs = ["fakeec2.go"],
+    importpath = "github.com/tazzledazzle/meridian/internal/fakeec2",
+    visibility = ["//:__subpackages__"],
+)
+
+go_test(
+    name = "fakeec2_test",
+    srcs = ["fakeec2_test.go"],
+    embed = [":fakeec2"],
+)

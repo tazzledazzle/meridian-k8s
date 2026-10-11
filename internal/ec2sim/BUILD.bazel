@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "ec2sim",
+    srcs = ["ec2sim.go"],
+    importpath = "github.com/tazzledazzle/meridian/internal/ec2sim",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/awsapi",
+        "//internal/catalog",
+    ],
+)
+
+go_test(
+    name = "ec2sim_test",
+    srcs = [
+        "adversarial_test.go",
+        "ec2sim_test.go",
+        "filter_test.go",
+        "fuzz2_test.go",
+        "fuzz_test.go",
+        "integration_test.go",
+        "page_test.go",
+    ],
+    embed = [":ec2sim"],
+    deps = [
+        "//internal/awscall",
+        "//internal/catalog",
+        "//internal/gateway",
+        "//internal/noderegistrar",
+        "//internal/ops",
+        "//internal/s0probe",
+    ],
+)

@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "noderegistrar",
+    srcs = [
+        "fleet.go",
+        "kube.go",
+        "kwok.go",
+        "reconcile.go",
+        "types.go",
+    ],
+    importpath = "github.com/tazzledazzle/meridian/internal/noderegistrar",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/awscall",
+        "//internal/catalog",
+    ],
+)
+
+go_test(
+    name = "noderegistrar_test",
+    srcs = [
+        "fleet_test.go",
+        "kube_test.go",
+        "kwok_test.go",
+        "reconcile_test.go",
+    ],
+    embed = [":noderegistrar"],
+    deps = ["//internal/fakeec2"],
+)

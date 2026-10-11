@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "aws-gateway_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tazzledazzle/meridian/cmd/aws-gateway",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//internal/gateway",
+        "//internal/ops",
+        "//internal/trace",
+    ],
+)
+
+go_binary(
+    name = "aws-gateway",
+    embed = [":aws-gateway_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "aws-gateway_test",
+    srcs = [
+        "adversarial_test.go",
+        "main_test.go",
+    ],
+    embed = [":aws-gateway_lib"],
+    deps = [
+        "//internal/awscall",
+        "//internal/gateway",
+        "//internal/ops",
+        "//internal/trace",
+    ],
+)

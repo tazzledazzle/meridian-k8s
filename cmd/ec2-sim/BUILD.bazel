@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "ec2-sim_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tazzledazzle/meridian/cmd/ec2-sim",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//internal/catalog",
+        "//internal/ec2sim",
+        "//internal/gateway",
+    ],
+)
+
+go_binary(
+    name = "ec2-sim",
+    embed = [":ec2-sim_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "ec2-sim_test",
+    srcs = [
+        "adversarial_test.go",
+        "main_test.go",
+    ],
+    embed = [":ec2-sim_lib"],
+)

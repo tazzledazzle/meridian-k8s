@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "versionsenv_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tazzledazzle/meridian/cmd/versionsenv",
+    visibility = ["//visibility:private"],
+    deps = ["//internal/versions"],
+)
+
+go_binary(
+    name = "versionsenv",
+    embed = [":versionsenv_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "versionsenv_test",
+    srcs = [
+        "adversarial_test.go",
+        "main_test.go",
+        "makefile_test.go",
+    ],
+    embed = [":versionsenv_lib"],
+)

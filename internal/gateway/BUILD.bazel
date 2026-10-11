@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "gateway",
+    srcs = [
+        "bind.go",
+        "gateway.go",
+        "proxy.go",
+    ],
+    importpath = "github.com/tazzledazzle/meridian/internal/gateway",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/awsapi",
+        "//internal/ops",
+    ],
+)
+
+go_test(
+    name = "gateway_test",
+    srcs = [
+        "adversarial_test.go",
+        "bind_test.go",
+        "fuzz_test.go",
+        "gateway_test.go",
+        "hardening_test.go",
+        "proxy_test.go",
+    ],
+    embed = [":gateway"],
+    deps = [
+        "//internal/awsapi",
+        "//internal/ops",
+    ],
+)

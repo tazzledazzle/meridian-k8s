@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "spot",
+    srcs = ["spot.go"],
+    importpath = "github.com/tazzledazzle/meridian/internal/spot",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/awsapi",
+        "//internal/awscall",
+    ],
+)
+
+go_test(
+    name = "spot_test",
+    srcs = [
+        "adversarial_test.go",
+        "event_test.go",
+        "fuzz2_test.go",
+        "fuzz_test.go",
+        "gateway_test.go",
+        "spot_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":spot"],
+    deps = [
+        "//internal/awsapi",
+        "//internal/fakeec2",
+        "//internal/gateway",
+        "//internal/ops",
+    ],
+)

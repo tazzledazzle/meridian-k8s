@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "catalog",
+    srcs = ["catalog.go"],
+    importpath = "github.com/tazzledazzle/meridian/internal/catalog",
+    visibility = ["//:__subpackages__"],
+)
+
+go_test(
+    name = "catalog_test",
+    srcs = ["catalog_test.go"],
+    embed = [":catalog"],
+)

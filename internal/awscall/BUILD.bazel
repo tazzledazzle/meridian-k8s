@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "awscall",
+    srcs = ["awscall.go"],
+    importpath = "github.com/tazzledazzle/meridian/internal/awscall",
+    visibility = ["//:__subpackages__"],
+    deps = ["//internal/awsapi"],
+)
+
+go_test(
+    name = "awscall_test",
+    srcs = [
+        "adversarial_test.go",
+        "awscall_test.go",
+        "fuzz_test.go",
+    ],
+    embed = [":awscall"],
+    deps = ["//internal/awsapi"],
+)

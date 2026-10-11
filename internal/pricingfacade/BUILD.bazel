@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "pricingfacade",
+    srcs = ["handler.go"],
+    importpath = "github.com/tazzledazzle/meridian/internal/pricingfacade",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/awsapi",
+        "//internal/catalog",
+    ],
+)
+
+go_test(
+    name = "pricingfacade_test",
+    srcs = [
+        "adversarial_test.go",
+        "fuzz2_test.go",
+        "fuzz_test.go",
+        "handler_test.go",
+        "helpers_test.go",
+        "integration_test.go",
+        "karpenter_source_test.go",
+        "protocol_test.go",
+    ],
+    embed = [":pricingfacade"],
+    deps = [
+        "//internal/catalog",
+        "//internal/gateway",
+        "//internal/ops",
+        "//internal/s0probe",
+    ],
+)

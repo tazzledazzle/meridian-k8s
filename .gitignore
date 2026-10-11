@@ -15,3 +15,8 @@ trace/gate/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Bazel
+bazel-*
+user.bazelrc
+MODULE.bazel.lock.tmp

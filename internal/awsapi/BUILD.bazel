@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "awsapi",
+    srcs = [
+        "errors.go",
+        "jsonrpc.go",
+        "query.go",
+        "sigv4.go",
+    ],
+    importpath = "github.com/tazzledazzle/meridian/internal/awsapi",
+    visibility = ["//:__subpackages__"],
+)
+
+go_test(
+    name = "awsapi_test",
+    srcs = [
+        "errors_test.go",
+        "jsonrpc_test.go",
+        "query_test.go",
+        "sigv4_adversarial_test.go",
+        "sigv4_fuzz_test.go",
+        "sigv4_target_test.go",
+        "sigv4_test.go",
+    ],
+    embed = [":awsapi"],
+)
