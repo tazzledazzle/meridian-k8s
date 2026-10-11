@@ -3,19 +3,24 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 # gazelle:prefix github.com/tazzledazzle/meridian
 gazelle(name = "gazelle")
 
-exports_files([
-    ".gitignore",
-    "go.mod",
-    "go.sum",
-    "Makefile",
-    "ops.yaml",
-    "versions.yaml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        ".gitignore",
+        "BUILD.bazel",
+        "MODULE.bazel",
+        "go.mod",
+        "go.sum",
+        "Makefile",
+        "docs/build/bazel.md",
+        "ops.yaml",
+        "versions.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
 
 # Every Go source in the repo plus the files `make` needs, for tests that copy the tree and run go/make.
 filegroup(
     name = "go_tree",
-    visibility = ["//visibility:public"],
     srcs = [
         "Makefile",
         "go.mod",
@@ -46,4 +51,97 @@ filegroup(
         "//internal/versions:gosrcs",
         "//test/initenv:gosrcs",
     ],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "s0_reports",
+    srcs = glob(["docs/s0/*.json"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "deploy_files",
+    srcs = glob(["deploy/**"]),
+    visibility = ["//visibility:public"],
+)
+
+# ============================================================================================================
+# Make target equivalents. `make T` == `bazel run //:T` (or `bazel test //:T` for the three test targets).
+# The table lives in docs/build/bazel.md; tests/bazel/test_make_parity.py fails if a make target loses its row.
+# ============================================================================================================
+
+[
+    alias(
+        name = t,
+        actual = "//tools/make:" + t,
+        visibility = ["//visibility:public"],
+    )
+    for t in [
+        "init",
+        "env-images",
+        "build",
+        "build-linux",
+        "check-sock",
+        "s0-up",
+        "s0-down",
+        "seed",
+        "trace-show",
+        "s0-probe",
+        "s0-probe-moto",
+        "s0-decide",
+        "kwok-up",
+        "vendor-kwok",
+        "deploy-registrar",
+    ]
+]
+
+# make test: every Go package (same 22 packages as `go test ./...`). `bazel test //...` also runs them.
+test_suite(
+    name = "test",
+    tests = [
+        "//cmd/aws-gateway:aws-gateway_test",
+        "//cmd/awscall:awscall_test",
+        "//cmd/ec2-sim:ec2-sim_test",
+        "//cmd/pricing-facade:pricing-facade_test",
+        "//cmd/s0probe:s0probe_test",
+        "//cmd/simctl:simctl_test",
+        "//cmd/versionsenv:versionsenv_test",
+        "//internal/awsapi:awsapi_test",
+        "//internal/awscall:awscall_test",
+        "//internal/catalog:catalog_test",
+        "//internal/ec2sim:ec2sim_test",
+        "//internal/fakeec2:fakeec2_test",
+        "//internal/gateway:gateway_test",
+        "//internal/noderegistrar:noderegistrar_test",
+        "//internal/ops:ops_test",
+        "//internal/pricingfacade:pricingfacade_test",
+        "//internal/s0probe:s0probe_test",
+        "//internal/simctl:simctl_test",
+        "//internal/spot:spot_test",
+        "//internal/trace:trace_test",
+        "//internal/versions:versions_test",
+        "//test/initenv:initenv_test",
+    ],
+)
+
+# make test-scripts: the Python tests for scripts/, warnings are errors.
+alias(
+    name = "test-scripts",
+    actual = "//scripts:py_tests",
+)
+
+# make lint-versions: versions.yaml fully pinned, and MODULE.bazel's repeated pins equal to it.
+alias(
+    name = "lint-versions",
+    actual = "//internal/versions:lint_versions_test",
+)
+
+# Build-output variant of make env-images (bazel-bin/.env.images). `bazel run //:env-images` writes it into the workspace.
+genrule(
+    name = "env_images_file",
+    srcs = ["versions.yaml"],
+    outs = [".env.images"],
+    cmd = "$(location //cmd/versionsenv) $(location versions.yaml) > $@",
+    tools = ["//cmd/versionsenv"],
 )

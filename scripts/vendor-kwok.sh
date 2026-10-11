@@ -2,7 +2,7 @@
 # Downloads the pinned KWOK release manifests into deploy/kwok/ so the stack can apply them without a network.
 # Run once online (and again when versions.yaml changes the kwok version); the files are committed.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${BUILD_WORKSPACE_DIRECTORY:-$(dirname "$0")/..}"   # bazel run: the real workspace, not the runfiles tree
 set -a; . ./.env.images; set +a
 V="${KWOK_VERSION:?run make env-images}"
 OUT=deploy/kwok

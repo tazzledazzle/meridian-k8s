@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "env.go",
         "load.go",
+        "modulepins.go",
         "versions.go",
     ],
     importpath = "github.com/tazzledazzle/meridian/internal/versions",
@@ -17,10 +18,27 @@ go_test(
     srcs = [
         "adversarial_test.go",
         "env_test.go",
+        "modulepins_test.go",
         "versions_test.go",
     ],
+    data = [
+        "//:MODULE.bazel",
+        "//:versions.yaml",
+    ],
     embed = [":versions"],
-    data = ["//:versions.yaml"],
+)
+
+# `make lint-versions`: versions.yaml fully pinned, and MODULE.bazel's repeated pins equal to it.
+go_test(
+    name = "lint_versions_test",
+    srcs = glob(["*_test.go"]),
+    args = ["-test.run=TestRepoVersionsFileIsValid|TestRepoModuleBazelPinsMatchVersionsYaml"],
+    data = [
+        "//:MODULE.bazel",
+        "//:versions.yaml",
+    ],
+    embed = [":versions"],
+    visibility = ["//visibility:public"],
 )
 
 # Plain sources, for the tests that run `go build` / `make` in a copy of the tree.

@@ -17,13 +17,16 @@ go_binary(
 go_test(
     name = "simctl_test",
     srcs = ["adversarial_test.go"],
+    data = ["//:go_tree"],
     embed = [":simctl_lib"],
+    tags = [
+        "local",
+        "no-sandbox",
+    ],
     deps = [
         "//internal/awsapi",
         "//internal/fakeec2",
     ],
-    data = ["//:go_tree"],
-    tags = ["local", "no-sandbox"],
 )
 
 # Plain sources, for the tests that run `go build` / `make` in a copy of the tree.

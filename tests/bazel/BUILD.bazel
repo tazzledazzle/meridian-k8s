@@ -1,0 +1,17 @@
+load("@rules_python//python:py_test.bzl", "py_test")
+
+py_test(
+    name = "test_make_parity",
+    srcs = ["test_make_parity.py"],
+    data = [
+        "//:BUILD.bazel",
+        "//:Makefile",
+        "//:docs/build/bazel.md",
+        "//scripts:BUILD.bazel",
+        "//scripts:init-env.sh",
+        "//scripts:s0-run.sh",
+        "//tools/make:BUILD.bazel",
+    ] + glob(["*.py"]),
+    env = {"PYTHONWARNINGS": "error"},
+    main = "test_make_parity.py",
+)

@@ -21,9 +21,12 @@ go_test(
         "main_test.go",
         "makefile_test.go",
     ],
-    embed = [":versionsenv_lib"],
     data = ["//:go_tree"],
-    tags = ["local", "no-sandbox"],
+    embed = [":versionsenv_lib"],
+    tags = [
+        "local",
+        "no-sandbox",
+    ],
 )
 
 # Plain sources, for the tests that run `go build` / `make` in a copy of the tree.

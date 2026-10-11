@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Creates the G0 k3d cluster on the Docker network "meridian" so pods can resolve the gateway by name.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${BUILD_WORKSPACE_DIRECTORY:-$(dirname "$0")/..}"   # bazel run: the real workspace, not the runfiles tree
 set -a; . ./.env.images; set +a
 export PATH="$PWD/bin:$PATH"   # picks up the checksum-verified bin/k3d when k3d is not installed system-wide
 

@@ -4,7 +4,7 @@
 # Seeding talks to Floci itself (not the gateway) because these setup calls are not part of the supported
 # operation list; they are what a real account would already contain.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${BUILD_WORKSPACE_DIRECTORY:-$(dirname "$0")/..}"   # bazel run: the real workspace, not the runfiles tree
 set -a; . ./.env; . ./.env.images; set +a
 NET="${MERIDIAN_NET:-meridian}"   # the gate sets meridian-gate
 export AWS_REGION=us-west-2

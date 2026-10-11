@@ -26,12 +26,12 @@ go_test(
         "probe_test.go",
         "xmltree_test.go",
     ],
+    data = ["//:ops.yaml"],
     embed = [":s0probe"],
     deps = [
         "//internal/gateway",
         "//internal/ops",
     ],
-    data = ["//:ops.yaml"],
 )
 
 # Plain sources, for the tests that run `go build` / `make` in a copy of the tree.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Prints the recorded AWS calls and whether ops.yaml supports each one.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${BUILD_WORKSPACE_DIRECTORY:-$(dirname "$0")/..}"   # bazel run: the real workspace, not the runfiles tree
 f=trace/raw/calls.json
 [ -s "$f" ] || { echo "no trace yet: $f is empty (the gateway flushes every 10s)"; exit 1; }
 # calls.json is {"calls": {"ec2:CreateFleet": 3, ...}, "unsupported": ["ec2:CreateFleet", ...]}

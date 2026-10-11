@@ -8,7 +8,7 @@
 # Exit status: 0 when the probe ran and wrote a report (check failures are expected during S0 and are the point of
 # the spike); non-zero when the probe could not run or wrote no new report.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${BUILD_WORKSPACE_DIRECTORY:-$(dirname "$0")/..}"   # bazel run: the real workspace, not the runfiles tree
 
 OUT="${1-docs/s0}"
 NAME="${2-report}"

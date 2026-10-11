@@ -1,4 +1,145 @@
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("@rules_python//python:py_library.bzl", "py_library")
+load("@rules_python//python:py_test.bzl", "py_test")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
 exports_files(
-    glob(["*.sh", "*.py"]),
+    glob([
+        "BUILD.bazel",
+        "*.sh",
+        "*.py",
+    ]),
     visibility = ["//visibility:public"],
 )
+
+py_library(
+    name = "profiles",
+    srcs = ["profiles.py"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "s0matrix",
+    srcs = ["s0matrix.py"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+)
+
+# The scripts' Python entry points, run hermetically by //tools/make (s0-up, s0-decide).
+py_binary(
+    name = "profiles_tool",
+    srcs = ["profiles.py"],
+    main = "profiles.py",
+    visibility = ["//visibility:public"],
+)
+
+py_binary(
+    name = "s0matrix_tool",
+    srcs = ["s0matrix.py"],
+    main = "s0matrix.py",
+    visibility = ["//visibility:public"],
+)
+
+# Same semantics as `python3 -W error -m unittest discover`: any warning is a failure.
+_PY_ERROR_ENV = {"PYTHONWARNINGS": "error"}
+
+py_test(
+    name = "test_profiles",
+    srcs = ["test_profiles.py"],
+    data = ["//:ops.yaml"],
+    env = _PY_ERROR_ENV,
+    main = "test_profiles.py",
+    deps = [":profiles"],
+)
+
+py_test(
+    name = "test_s0matrix",
+    srcs = ["test_s0matrix.py"],
+    data = [
+        "//:ops.yaml",
+        "//:s0_reports",
+        "//internal/ops:ops.go",
+    ],
+    env = _PY_ERROR_ENV,
+    main = "test_s0matrix.py",
+    deps = [
+        ":profiles",
+        ":s0matrix",
+    ],
+)
+
+py_test(
+    name = "test_s0matrix_adversarial",
+    srcs = ["test_s0matrix_adversarial.py"],
+    data = [
+        "//:ops.yaml",
+        "//:s0_reports",
+        "//internal/ops:ops.go",
+    ],
+    env = _PY_ERROR_ENV,
+    main = "test_s0matrix_adversarial.py",
+    deps = [":s0matrix"],
+)
+
+py_test(
+    name = "test_s0run",
+    srcs = ["test_s0run.py"],
+    data = ["s0-run.sh"],
+    env = _PY_ERROR_ENV,
+    main = "test_s0run.py",
+)
+
+py_test(
+    name = "test_s0run_adversarial",
+    srcs = ["test_s0run_adversarial.py"],
+    data = ["s0-run.sh"],
+    env = _PY_ERROR_ENV,
+    main = "test_s0run_adversarial.py",
+)
+
+test_suite(
+    name = "py_tests",
+    tests = [
+        ":test_profiles",
+        ":test_s0matrix",
+        ":test_s0matrix_adversarial",
+        ":test_s0run",
+        ":test_s0run_adversarial",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# One sh_binary per script: `bazel run //scripts:<name> -- args`. Each cd's to the real workspace
+# (BUILD_WORKSPACE_DIRECTORY) first, so .env, bin/ and deploy/ resolve exactly as under make.
+# Docker/k3d environment (PATH to bin/k3d, MERIDIAN_UID/GID, COMPOSE) is added by //tools/make wrappers.
+[
+    sh_binary(
+        name = name,
+        srcs = [name + ".sh"],
+        data = data,
+        visibility = ["//visibility:public"],
+    )
+    for name, data in {
+        "check-no-sock": ["//:deploy_files"],
+        "deploy-registrar": [
+            "kc",
+            "//:deploy_files",
+        ],
+        "init-env": [],
+        "k3d-up": [],
+        "karpenter-install": [
+            "kc",
+            "//:deploy_files",
+        ],
+        "kc": [],
+        "kwok-up": [
+            "kc",
+            "//:deploy_files",
+        ],
+        "seed-floci": [],
+        "s0-run": [],
+        "trace-show": [],
+        "vendor-kwok": ["//:deploy_files"],
+    }.items()
+]

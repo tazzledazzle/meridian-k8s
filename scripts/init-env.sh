@@ -3,6 +3,7 @@
 # Usage: init-env.sh [path]   (default: .env)
 set -euo pipefail
 
+[ -n "${BUILD_WORKSPACE_DIRECTORY:-}" ] && cd "$BUILD_WORKSPACE_DIRECTORY"   # bazel run: write into the workspace
 ENV_FILE="${1:-.env}"
 
 # Never overwrite: regenerating would silently invalidate running services.

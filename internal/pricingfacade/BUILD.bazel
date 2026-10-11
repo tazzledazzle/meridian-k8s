@@ -23,6 +23,7 @@ go_test(
         "karpenter_source_test.go",
         "protocol_test.go",
     ],
+    data = ["//:ops.yaml"],
     embed = [":pricingfacade"],
     deps = [
         "//internal/catalog",
@@ -30,7 +31,6 @@ go_test(
         "//internal/ops",
         "//internal/s0probe",
     ],
-    data = ["//:ops.yaml"],
 )
 
 # Plain sources, for the tests that run `go build` / `make` in a copy of the tree.

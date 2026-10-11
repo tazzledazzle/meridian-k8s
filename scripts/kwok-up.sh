@@ -2,7 +2,7 @@
 # Applies the vendored KWOK release (CRDs, RBAC, controller, node/pod stages) to the running cluster.
 # Idempotent. The controller image is pinned to the digest in versions.yaml (KWOK_IMAGE in .env.images).
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${BUILD_WORKSPACE_DIRECTORY:-$(dirname "$0")/..}"   # bazel run: the real workspace, not the runfiles tree
 set -a; . ./.env.images; set +a
 KC=scripts/kc.sh
 # Refuse to apply files that differ from what the vendoring script recorded.

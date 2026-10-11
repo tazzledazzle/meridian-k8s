@@ -2,7 +2,7 @@
 # Fails if any service in the given Compose files mounts the Docker socket (handoff A1).
 # Usage: check-no-sock.sh <compose-file>...   (reads the fully rendered config, so overrides and anchors count)
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${BUILD_WORKSPACE_DIRECTORY:-$(dirname "$0")/..}"   # bazel run: the real workspace, not the runfiles tree
 args=()
 for f in "$@"; do args+=(-f "$f"); done
 # Placeholders for the variables the file requires: they are only needed to render it, not for this check.

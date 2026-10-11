@@ -22,6 +22,7 @@ go_test(
         "integration_test.go",
         "page_test.go",
     ],
+    data = ["//:ops.yaml"],
     embed = [":ec2sim"],
     deps = [
         "//internal/awscall",
@@ -31,7 +32,6 @@ go_test(
         "//internal/ops",
         "//internal/s0probe",
     ],
-    data = ["//:ops.yaml"],
 )
 
 # Plain sources, for the tests that run `go build` / `make` in a copy of the tree.

@@ -1,0 +1,26 @@
+package(default_visibility = ["//visibility:public"])
+
+platform(
+    name = "linux_amd64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+platform(
+    name = "linux_arm64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:arm64",
+    ],
+)
+
+# Linux platform for the host's CPU architecture (what `make build-linux` uses via `go env GOARCH`).
+alias(
+    name = "linux_host",
+    actual = select({
+        "@platforms//cpu:arm64": ":linux_arm64",
+        "//conditions:default": ":linux_amd64",
+    }),
+)

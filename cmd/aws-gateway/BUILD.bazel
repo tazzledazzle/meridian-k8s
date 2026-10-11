@@ -24,6 +24,7 @@ go_test(
         "adversarial_test.go",
         "main_test.go",
     ],
+    data = ["//:ops.yaml"],
     embed = [":aws-gateway_lib"],
     deps = [
         "//internal/awscall",
@@ -31,7 +32,6 @@ go_test(
         "//internal/ops",
         "//internal/trace",
     ],
-    data = ["//:ops.yaml"],
 )
 
 # Plain sources, for the tests that run `go build` / `make` in a copy of the tree.

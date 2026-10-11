@@ -1,0 +1,126 @@
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load(":defs.bzl", "CMDS", "linux_binaries", "make_target")
+
+exports_files([
+    "meridian.sh",
+    "BUILD.bazel",
+])
+
+linux_binaries()
+
+# The host versionsenv under a distinct runfiles path: the linux build of the same binary (in linux_bins) would
+# otherwise collide with //cmd/versionsenv in a target's runfiles when both are data of one target.
+copy_file(
+    name = "versionsenv_host",
+    src = "//cmd/versionsenv",
+    out = "versionsenv_host",
+    is_executable = True,
+)
+
+# Static linux binaries (host CPU architecture): what `make build-linux` puts in bin/linux/.
+filegroup(
+    name = "linux_bins",
+    srcs = [":%s_linux" % c for c in CMDS],
+)
+
+# Host binaries: what `make build` puts in bin/.
+filegroup(
+    name = "host_bins",
+    srcs = ["//cmd/%s:%s" % (c, c) for c in CMDS],
+)
+
+# ---- Make target equivalents. Run with `bazel run //:<name>` (aliases at the repo root). ----
+
+make_target(
+    name = "init",
+    tools = {"init_env": "//scripts:init-env"},
+)
+
+make_target(
+    name = "env-images",
+    tools = {"versionsenv": ":versionsenv_host"},
+)
+
+make_target(
+    name = "build",
+    bin_sets = {"HOST_BINS": ":host_bins"},
+)
+
+make_target(
+    name = "build-linux",
+    bin_sets = {"LINUX_BINS": ":linux_bins"},
+)
+
+make_target(
+    name = "check-sock",
+    tools = {"check_no_sock": "//scripts:check-no-sock"},
+)
+
+make_target(
+    name = "s0-up",
+    bin_sets = {"LINUX_BINS": ":linux_bins"},
+    tools = {
+        "check_no_sock": "//scripts:check-no-sock",
+        "init_env": "//scripts:init-env",
+        "k3d_up": "//scripts:k3d-up",
+        "karpenter_install": "//scripts:karpenter-install",
+        "profiles": "//scripts:profiles_tool",
+        "seed_floci": "//scripts:seed-floci",
+        "versionsenv": ":versionsenv_host",
+    },
+)
+
+make_target(name = "s0-down")
+
+make_target(
+    name = "seed",
+    bin_sets = {"LINUX_BINS": ":linux_bins"},
+    tools = {"seed_floci": "//scripts:seed-floci"},
+)
+
+make_target(
+    name = "trace-show",
+    tools = {"trace_show": "//scripts:trace-show"},
+)
+
+make_target(
+    name = "s0-probe",
+    bin_sets = {"LINUX_BINS": ":linux_bins"},
+    tools = {"s0_run": "//scripts:s0-run"},
+)
+
+make_target(
+    name = "s0-probe-moto",
+    bin_sets = {"LINUX_BINS": ":linux_bins"},
+    tools = {"s0_run": "//scripts:s0-run"},
+)
+
+make_target(
+    name = "s0-decide",
+    tools = {"s0matrix": "//scripts:s0matrix_tool"},
+)
+
+make_target(
+    name = "kwok-up",
+    tools = {
+        "kwok_up": "//scripts:kwok-up",
+        "versionsenv": ":versionsenv_host",
+    },
+)
+
+make_target(
+    name = "vendor-kwok",
+    tools = {
+        "vendor_kwok": "//scripts:vendor-kwok",
+        "versionsenv": ":versionsenv_host",
+    },
+)
+
+make_target(
+    name = "deploy-registrar",
+    tools = {
+        "deploy_registrar": "//scripts:deploy-registrar",
+        "init_env": "//scripts:init-env",
+        "versionsenv": ":versionsenv_host",
+    },
+)

@@ -1,3 +1,4 @@
+# Every target below also exists in Bazel: `bazel run //:<target>` (tests: `bazel test //:<target>`). See docs/build/bazel.md.
 .PHONY: kwok-up vendor-kwok deploy-registrar init test test-scripts lint-versions env-images build build-linux s0-up s0-down seed trace-show check-sock s0-probe s0-probe-moto s0-decide
 
 # Generates local credentials; safe to run repeatedly.
@@ -13,7 +14,7 @@ test-scripts:
 
 # Fails if versions.yaml has any unpinned entry.
 lint-versions:
-	go test ./internal/versions/ -run TestRepoVersionsFileIsValid -v
+	go test ./internal/versions/ -run 'TestRepoVersionsFileIsValid|TestRepoModuleBazelPinsMatchVersionsYaml' -v
 
 # Renders versions.yaml as KEY=VALUE lines for Compose and the shell scripts.
 env-images:

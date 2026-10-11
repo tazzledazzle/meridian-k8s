@@ -1,0 +1,29 @@
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load(":defs.bzl", "service_image")
+
+# ops.yaml is read at startup (the gateway's -ops flag), at /ops.yaml like Dockerfile.service.
+pkg_tar(
+    name = "ops_yaml_layer",
+    srcs = ["//:ops.yaml"],
+    mode = "0644",
+)
+
+service_image(
+    name = "aws-gateway",
+    cmd = "aws-gateway",
+)
+
+service_image(
+    name = "ec2-sim",
+    cmd = "ec2-sim",
+)
+
+service_image(
+    name = "pricing-facade",
+    cmd = "pricing-facade",
+)
+
+service_image(
+    name = "node-registrar",
+    cmd = "node-registrar",
+)

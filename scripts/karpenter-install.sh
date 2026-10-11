@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Installs the pinned Karpenter chart into the G0 cluster with the local gateway credentials.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${BUILD_WORKSPACE_DIRECTORY:-$(dirname "$0")/..}"   # bazel run: the real workspace, not the runfiles tree
 set -a; . ./.env; . ./.env.images; set +a
 command -v helm >/dev/null || { echo "helm is required"; exit 1; }
 KC=scripts/kc.sh

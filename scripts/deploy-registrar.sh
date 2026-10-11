@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the node-registrar image, imports it into the k3d cluster and applies its manifest. Idempotent.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "${BUILD_WORKSPACE_DIRECTORY:-$(dirname "$0")/..}"   # bazel run: the real workspace, not the runfiles tree
 set -a; . ./.env; . ./.env.images; set +a
 export PATH="$PWD/bin:$PATH"   # the checksum-verified k3d
 KC=scripts/kc.sh
